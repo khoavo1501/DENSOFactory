@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { devicesApi } from "@/api/endpoints";
 import { DeviceCard } from "@/components/DeviceCard";
 import { ReconnectingWs } from "@/api/ws";
 import { useAuth } from "@/store";
-import type { Device, WsMessage } from "@/types";
+import { useToasts } from "@/store/toasts";
+import type { Device, WsMessage, EventCode, Severity, DeviceState } from "@/types";
 
 const SOURCE_FILTERS: Array<"all" | "simulated" | "real"> = [
   "all",
@@ -18,6 +19,8 @@ export function OverviewPage() {
     "all"
   );
   const [liveValues, setLiveValues] = useState<Record<string, string>>({});
+  const pushToast = useToasts((s) => s.push);
+  const lastStateRef = useRef<Record<string, DeviceState | undefined>>({});
 
   const { data, isLoading, error, refetch } = useQuery<Device[]>({
     queryKey: ["devices", sourceFilter],
@@ -28,15 +31,17 @@ export function OverviewPage() {
     refetchInterval: 30_000,
   });
 
-  // WebSocket: subscribe to all devices, update live values on telemetry.
+  // WebSocket: subscribe to all devices, update live values + push toasts
+  // for critical events and error state transitions.
   useEffect(() => {
     const ws = new ReconnectingWs("*");
     const off = ws.onMessage((raw) => {
       const m = raw as WsMessage;
-      if (m.type === "telemetry" && m.device_id) {
+      if (!m.device_id) return;
+
+      if (m.type === "telemetry") {
         const regs = m.registers as Record<string, { value?: unknown }> | undefined;
         if (regs) {
-          // Pick the first register with a value for the sparkline.
           const first = Object.entries(regs).find(([, v]) => v && "value" in v);
           if (first) {
             const [reg, v] = first;
@@ -46,6 +51,43 @@ export function OverviewPage() {
             }));
           }
         }
+      } else if (m.type === "status") {
+        const newState = m.state as DeviceState | undefined;
+        const prevState = lastStateRef.current[m.device_id];
+        if (newState && newState !== prevState) {
+          if (newState === "error") {
+            pushToast({
+              severity: "critical" as Severity,
+              code: "WATCHDOG_RESET",
+              device_id: m.device_id,
+              message: `Device entered ERROR state${
+                m.reason ? `: ${m.reason}` : ""
+              }`,
+            });
+          } else if (prevState === "error" && newState === "online") {
+            pushToast({
+              severity: "info" as Severity,
+              code: "POWER_ON",
+              device_id: m.device_id,
+              message: "Device recovered: online",
+            });
+          }
+          lastStateRef.current[m.device_id] = newState;
+        }
+      } else if (m.type === "event") {
+        const events = (m as { events?: { code: EventCode; severity: Severity; message?: string }[] }).events;
+        if (events) {
+          for (const e of events) {
+            if (e.severity === "critical" || e.severity === "warning") {
+              pushToast({
+                severity: e.severity,
+                code: e.code,
+                device_id: m.device_id,
+                message: e.message,
+              });
+            }
+          }
+        }
       }
     });
     ws.start();
@@ -53,7 +95,7 @@ export function OverviewPage() {
       off();
       ws.stop();
     };
-  }, []);
+  }, [pushToast]);
 
   const devices = useMemo(() => data ?? [], [data]);
 

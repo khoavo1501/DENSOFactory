@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth, useTheme } from "@/store";
 import { authApi } from "@/api/endpoints";
 import { ApiError } from "@/api/client";
+import { ToastStack } from "./Toast";
 
 export function Shell() {
   const { user, setUser } = useAuth();
@@ -111,6 +112,7 @@ export function Shell() {
       <main className="main">
         <Outlet />
       </main>
+      <ToastStack />
     </div>
   );
 }
