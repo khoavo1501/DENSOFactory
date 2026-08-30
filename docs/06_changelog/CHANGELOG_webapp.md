@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 0.2.1
+version: 0.3.0
 ---
 
 # Webapp Changelog
@@ -14,6 +14,32 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 Định dạng theo [keep-a-changelog](https://keepachangelog.com/vi-VN/1.1.0/).
 
 ## [Unreleased]
+
+## [0.3.0] - 2026-08-30
+
+### Added
+- M2: Frontend SPA (Vite + React 18 + TypeScript).
+- M2: Layout shell Grafana-style (TopBar + left rail, dark/light toggle).
+- M2: Design tokens (CSS variables) — colors, spacing, typography per D-10 SCADA+HMI density.
+- M2: Auth flow — login page, `/api/auth/me` hydration, logout.
+- M2: TanStack Query cho REST API + Zustand cho auth/theme state (persisted to localStorage).
+- M2: Reconnecting WebSocket client (exponential backoff 1s→30s).
+- M2: API client với CSRF double-submit (auto-inject `X-CSRF-Token` header).
+- M2: Pages: `/login`, `/` (Overview), `/devices/:id`, `/events`, `/diagnostics`, `/settings`.
+- M2: Components: `DeviceCard`, `StateDot`, `SourceBadge`, `SeverityChip`.
+- M2: Indicator nguồn (`SIM`/`REAL`) trên mỗi device card (D-11).
+- M2: Indicator state dot với pulse animation cho `error` (D-07).
+- M2: Dark/light mode toggle (D-04), persisted.
+- M2: Source filter (All / Simulated / Real) trên Overview.
+- M2: Admin-only `/settings` (Simulator toggle, Source Mapping CRUD).
+- M2: nginx reverse proxy (port 5173) cho `/api` + `/ws`.
+- M2: Dockerfile multi-stage (node:20-alpine build + nginx:1.27-alpine runtime).
+- M2: docker-compose thêm service `webapp` (port 5173).
+- M2: Lazy loading cho tất cả pages (code splitting).
+- M2: New DECISIONS D-47, D-48, D-49 (xem DECISIONS.md).
+
+### Changed
+- docker-compose: backend `expose` → `ports` để webapp nginx có thể proxy trong network nội bộ (D-29).
 
 ## [0.2.1] - 2026-08-30
 
@@ -99,6 +125,7 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 - N/A (chưa có code ở M0).
 
 [Unreleased]: #
+[0.3.0]: #
 [0.2.1]: #
 [0.2.0]: #
 [0.1.0]: #

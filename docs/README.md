@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Documentation Index
@@ -15,7 +15,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## 1. Quy tắc chung
 
 - [File Management Standard](./FILE_MANAGEMENT.md) — chuẩn đặt tên, phân loại, vòng đời tài liệu.
-- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho 42 quyết định kiến trúc đã chốt (D-01 → D-42).
+- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho 49 quyết định kiến trúc đã chốt (D-01 → D-49).
 
 ## 2. Kế hoạch (`01_plan/`)
 
@@ -26,15 +26,17 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 
 ## 3. Thiết kế (`02_design/`)
 
-*(Sẽ bổ sung ở M3: design system, wireframes, ERD.)*
+- [ERD Postgres](./02_design/erd_postgres.md) — sơ đồ + chi tiết từng bảng.
+- [Webapp Architecture](./02_design/webapp_architecture.md) — frontend M2: stack, routing, WebSocket, CSRF, Docker.
 
 ## 4. API (`03_api/`)
 
-*(Sẽ bổ sung ở M1: api_reference, ws_protocol.)*
+- [API Reference](./03_api/api_reference.md) — REST + WebSocket reference (OpenAPI + curl examples).
 
 ## 5. Vận hành (`04_runbook/`)
 
-*(Sẽ bổ sung ở M1/M6: deploy, troubleshooting.)*
+- [Runbook Local Dev](./04_runbook/runbook_local_dev.md) — khởi động + troubleshooting.
+- [Git Workflow](./04_runbook/git_workflow.md) — branch + commit + PR conventions.
 
 ## 6. Test (`05_test/`)
 
@@ -51,3 +53,4 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## Change history
 
 - 2026-08-30: Tạo mục lục dự án (M0).
+- 2026-08-30: Bump lên v1.1.0 — bổ sung link webapp_architecture.md, api_reference.md, runbook, git_workflow, cập nhật số quyết định (M2).

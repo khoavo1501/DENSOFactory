@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Architecture Decisions
@@ -326,6 +326,21 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - **Lý do:** Test nhanh, deterministic, không cần broker/MQTT runtime.
 - **Hệ quả:** 17 test pass trong ~5s; test suite chạy song song được.
 
+## D-47 — Frontend stack M2
+- **Quyết định:** React 18 + TypeScript + Vite; React Router v6; TanStack Query (server state); Zustand (client state, persisted).
+- **Lý do:** Ecosystem lớn, dễ tuyển người; build nhanh; TanStack Query xử lý cache/refetch tốt; Zustand nhẹ, persisted to localStorage cho auth/theme.
+- **Hệ quả:** SPA nhẹ (~250 KB JS unzipped), code splitting lazy-load pages, source maps cho debug.
+
+## D-48 — Frontend WebSocket pattern
+- **Quyết định:** Native `WebSocket` + class `ReconnectingWs` với exponential backoff (1s → 30s cap); mỗi page quản lý subscription lifecycle.
+- **Lý do:** Đơn giản, không cần lib ngoài; page tự subscribe/unsubscribe theo mount/unmount.
+- **Hệ quả:** 1 kết nối WS / page, không có pub/sub broker phức tạp; multi-instance cần Redis pub/sub (D-19 future).
+
+## D-49 — Frontend nginx proxy
+- **Quyết định:** Webapp serve qua nginx (port 5173), proxy `/api/` và `/ws/` sang `backend:8000`; SPA fallback cho client routing.
+- **Lý do:** Tách biệt frontend/backend trong Docker network; frontend không cần biết về API host; production-ready (nginx phục vụ static + proxy).
+- **Hệ quả:** Webapp truy cập `http://localhost:5173` thấy toàn bộ app; backend chỉ cần expose port 8000 cho Swagger/dev.
+
 ---
 
 # Phụ lục: Bảng tổng hợp env vars
@@ -394,3 +409,4 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 
 - 2026-08-30: Tạo file DECISIONS.md (v1.0.0) — tổng hợp 42 quyết định từ 3 vòng hội thoại planning.
 - 2026-08-30: Bump lên v1.1.0 — thêm D-43, D-44, D-45, D-46 từ QA M1 review (idempotent logout, login rate-limit, MQTT consumer fail-safe, test isolation).
+- 2026-08-30: Bump lên v1.2.0 — thêm D-47, D-48, D-49 từ M2 (frontend stack React+TanStack+Zustand, ReconnectingWs class, nginx proxy).
