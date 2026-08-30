@@ -2,30 +2,67 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { eventsApi } from "@/api/endpoints";
 import { SeverityChip } from "@/components/Indicators";
+import { TimeRangePicker } from "@/components/TimeRangePicker";
+import { resolveRange } from "@/utils/timeRange";
 import type { EventItem, Severity, EventCode } from "@/types";
 
-const SEVERITY_FILTERS: Array<"all" | Severity> = ["all", "critical", "warning", "info"];
+const SEVERITY_FILTERS: Array<"all" | Severity> = [
+  "all",
+  "critical",
+  "warning",
+  "info",
+];
+
+// Top event codes for quick filter (rest available via API code param).
+const COMMON_CODES: EventCode[] = [
+  "SLAVE_COMM_LOST",
+  "SLAVE_COMM_RESTORED",
+  "VALUE_OUT_OF_RANGE",
+  "SENSOR_FAULT",
+  "EMERGENCY_STOP",
+  "MASTER_REBOOT",
+  "BUFFER_OVERFLOW",
+  "WATCHDOG_RESET",
+  "POWER_ON",
+  "W5500_LINK_DOWN",
+  "W5500_LINK_UP",
+  "MQTT_DISCONNECTED",
+  "MQTT_RECONNECTED",
+];
 
 export function EventsPage() {
   const [severity, setSeverity] = useState<"all" | Severity>("all");
+  const [codes, setCodes] = useState<Set<EventCode>>(new Set());
   const [page, setPage] = useState(1);
+  const [range, setRange] = useState(() => resolveRange("24h"));
   const pageSize = 50;
 
-  const now = Math.floor(Date.now() / 1000);
-  const from = now - 24 * 3600;
+  const codeParam = codes.size > 0 ? Array.from(codes).join(",") : undefined;
+  const severityParam = severity === "all" ? undefined : severity;
 
   const { data, isLoading } = useQuery<EventItem[]>({
-    queryKey: ["events", severity, page],
+    queryKey: ["events", severityParam, codeParam, range, page],
     queryFn: () =>
       eventsApi.list({
-        severity: severity === "all" ? undefined : severity,
-        from,
-        to: now,
+        severity: severityParam,
+        code: codeParam,
+        from: range.from,
+        to: range.to,
         page,
         page_size: pageSize,
       }) as Promise<EventItem[]>,
     refetchInterval: 15_000,
   });
+
+  const toggleCode = (c: EventCode) => {
+    setCodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      return next;
+    });
+    setPage(1);
+  };
 
   return (
     <div>
@@ -37,20 +74,83 @@ export function EventsPage() {
           marginBottom: 12,
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 16 }}>Events (last 24h)</h1>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
-          {SEVERITY_FILTERS.map((s) => (
-            <button
-              key={s}
-              className={"btn" + (severity === s ? " btn-primary" : "")}
-              onClick={() => {
-                setSeverity(s);
-                setPage(1);
-              }}
-            >
-              {s}
-            </button>
-          ))}
+        <h1 style={{ margin: 0, fontSize: 16 }}>Events</h1>
+        <span className="muted" style={{ fontSize: 12 }}>
+          {data?.length ?? 0} on this page
+        </span>
+        <div style={{ marginLeft: "auto" }}>
+          <TimeRangePicker
+            from={range.from}
+            to={range.to}
+            onChange={(r) => {
+              setRange({ from: r.from, to: r.to });
+              setPage(1);
+            }}
+          />
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          alignItems: "flex-start",
+          marginBottom: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <div className="card-subtitle" style={{ marginBottom: 4 }}>
+            Severity
+          </div>
+          <div style={{ display: "flex", gap: 4 }}>
+            {SEVERITY_FILTERS.map((s) => (
+              <button
+                key={s}
+                className={"btn" + (severity === s ? " btn-primary" : "")}
+                onClick={() => {
+                  setSeverity(s);
+                  setPage(1);
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 320 }}>
+          <div className="card-subtitle" style={{ marginBottom: 4 }}>
+            Codes ({codes.size} selected)
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 4,
+              flexWrap: "wrap",
+              maxHeight: 80,
+              overflow: "auto",
+            }}
+          >
+            {COMMON_CODES.map((c) => (
+              <button
+                key={c}
+                className={"btn" + (codes.has(c) ? " btn-primary" : "")}
+                onClick={() => toggleCode(c)}
+                style={{ fontSize: 11, padding: "2px 6px", height: 24 }}
+              >
+                {c}
+              </button>
+            ))}
+            {codes.size > 0 && (
+              <button
+                className="btn btn-ghost"
+                onClick={() => setCodes(new Set())}
+                style={{ fontSize: 11, height: 24 }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -81,7 +181,11 @@ export function EventsPage() {
             )}
             {data?.length === 0 && !isLoading && (
               <tr>
-                <td colSpan={5} style={{ padding: 16, textAlign: "center" }} className="muted">
+                <td
+                  colSpan={5}
+                  style={{ padding: 16, textAlign: "center" }}
+                  className="muted"
+                >
                   No events.
                 </td>
               </tr>
@@ -98,7 +202,7 @@ export function EventsPage() {
                   <SeverityChip severity={e.severity} />
                 </td>
                 <td style={td} className="mono">
-                  {e.code as EventCode}
+                  {e.code}
                 </td>
                 <td style={td} className="mono">
                   {e.device_id}
