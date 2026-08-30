@@ -1,0 +1,189 @@
+/* Design tokens for IIoT Gateway webapp (D-02 Grafana + HMI).
+   Single source of truth for color, typography, spacing.
+   Light/dark via [data-theme="..."] on <html>. */
+
+:root,
+[data-theme="dark"] {
+  /* Surfaces */
+  --bg-base: #0f1419;
+  --bg-elevated: #1a212b;
+  --bg-overlay: #232b36;
+  --bg-hover: #2a3340;
+  --border: #2d3748;
+  --border-strong: #3d4856;
+
+  /* Text */
+  --text-primary: #e6edf3;
+  --text-secondary: #9ca8b8;
+  --text-muted: #6b7785;
+  --text-inverse: #0f1419;
+
+  /* State (device) */
+  --state-online: #16a34a;
+  --state-degraded: #eab308;
+  --state-error: #dc2626;
+  --state-offline: #6b7280;
+
+  /* Severity */
+  --severity-info: #3b82f6;
+  --severity-warning: #f97316;
+  --severity-critical: #ef4444;
+
+  /* Source */
+  --source-simulated: #a78bfa;
+  --source-real: #38bdf8;
+
+  /* Accent (selection/focus) */
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+
+  /* Row heights (D-10 SCADA density) */
+  --row-table: 28px;
+  --row-list: 32px;
+  --row-header: 36px;
+
+  /* Spacing (3-step scale) */
+  --space-1: 8px;
+  --space-2: 12px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Type */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", monospace;
+
+  /* Layout */
+  --topbar-height: 48px;
+  --rail-width: 60px;
+  --rail-width-expanded: 200px;
+
+  /* Z */
+  --z-toast: 1000;
+  --z-modal: 900;
+}
+
+[data-theme="light"] {
+  --bg-base: #f7f8fa;
+  --bg-elevated: #ffffff;
+  --bg-overlay: #ffffff;
+  --bg-hover: #eef0f3;
+  --border: #d8dde3;
+  --border-strong: #b8c0cb;
+
+  --text-primary: #11151a;
+  --text-secondary: #5a6573;
+  --text-muted: #8a95a3;
+  --text-inverse: #ffffff;
+
+  --state-online: #15803d;
+  --state-degraded: #ca8a04;
+  --state-error: #b91c1c;
+  --state-offline: #4b5563;
+
+  --severity-info: #2563eb;
+  --severity-warning: #ea580c;
+  --severity-critical: #dc2626;
+
+  --source-simulated: #7c3aed;
+  --source-real: #0284c7;
+
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+code,
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

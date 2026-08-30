@@ -79,6 +79,15 @@ services:
       - ./docs:/app/docs:ro
       - ./backend/master_protocol_v1.json:/app/master_protocol_v1.json:ro
 
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
   simulator:
     build:
       context: ./simulator
