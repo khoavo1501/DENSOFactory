@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.2.0
+version: 1.3.0
 ---
 
 # Architecture Decisions
@@ -331,6 +331,11 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - **Lý do:** Ecosystem lớn, dễ tuyển người; build nhanh; TanStack Query xử lý cache/refetch tốt; Zustand nhẹ, persisted to localStorage cho auth/theme.
 - **Hệ quả:** SPA nhẹ (~250 KB JS unzipped), code splitting lazy-load pages, source maps cho debug.
 
+## D-50 — Toast UX (M3)
+- **Quyết định:** Toast top-right fixed, max 5 stack, group theo `device_id+code` trong 5s window (count++), auto-dismiss 8s cho `info`/`warning`, manual cho `critical`. ARIA `aria-live="assertive"` cho critical, `polite` cho info/warning. Sound OFF default, toggle trong user menu (D-07).
+- **Lý do:** D-07 chốt. Group rule tránh spam khi cùng event bùng nổ. ARIA quan trọng cho operator khiếm thị. State transition (online→error) cũng push toast.
+- **Hệ quả:** `useToasts` store + `ToastStack` component, wire vào Overview từ WebSocket event + status transition.
+
 ## D-48 — Frontend WebSocket pattern
 - **Quyết định:** Native `WebSocket` + class `ReconnectingWs` với exponential backoff (1s → 30s cap); mỗi page quản lý subscription lifecycle.
 - **Lý do:** Đơn giản, không cần lib ngoài; page tự subscribe/unsubscribe theo mount/unmount.
@@ -410,3 +415,4 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - 2026-08-30: Tạo file DECISIONS.md (v1.0.0) — tổng hợp 42 quyết định từ 3 vòng hội thoại planning.
 - 2026-08-30: Bump lên v1.1.0 — thêm D-43, D-44, D-45, D-46 từ QA M1 review (idempotent logout, login rate-limit, MQTT consumer fail-safe, test isolation).
 - 2026-08-30: Bump lên v1.2.0 — thêm D-47, D-48, D-49 từ M2 (frontend stack React+TanStack+Zustand, ReconnectingWs class, nginx proxy).
+- 2026-08-30: Bump lên v1.3.0 — thêm D-50 từ M3 (toast UX: group, auto-dismiss, ARIA, wire vào Overview).
