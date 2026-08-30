@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Documentation Index
@@ -15,7 +15,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## 1. Quy tắc chung
 
 - [File Management Standard](./FILE_MANAGEMENT.md) — chuẩn đặt tên, phân loại, vòng đời tài liệu.
-- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho 49 quyết định kiến trúc đã chốt (D-01 → D-49).
+- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho quyết định kiến trúc đã chốt (D-01 → D-50).
 
 ## 2. Kế hoạch (`01_plan/`)
 
@@ -28,6 +28,8 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 
 - [ERD Postgres](./02_design/erd_postgres.md) — sơ đồ + chi tiết từng bảng.
 - [Webapp Architecture](./02_design/webapp_architecture.md) — frontend M2: stack, routing, WebSocket, CSRF, Docker.
+- [Design System](./02_design/design_system.md) — design tokens + components spec (M3 chốt).
+- [Wireframes](./02_design/wireframes.md) — ASCII wireframes 6 màn hình (M3).
 
 ## 4. API (`03_api/`)
 
@@ -53,4 +55,5 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## Change history
 
 - 2026-08-30: Tạo mục lục dự án (M0).
+- 2026-08-30: Bump lên v1.2.0 — link design_system.md + wireframes.md (M3), D-50.
 - 2026-08-30: Bump lên v1.1.0 — bổ sung link webapp_architecture.md, api_reference.md, runbook, git_workflow, cập nhật số quyết định (M2).

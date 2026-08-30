@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 0.3.0
+version: 0.4.0
 ---
 
 # Webapp Changelog
@@ -14,6 +14,17 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 Định dạng theo [keep-a-changelog](https://keepachangelog.com/vi-VN/1.1.0/).
 
 ## [Unreleased]
+
+## [0.4.0] - 2026-08-30
+
+### Added
+- M3: Design System (M3 chốt UI/UX) — `docs/02_design/design_system.md` với design tokens, components spec, motion, accessibility, toast spec.
+- M3: Wireframes ASCII cho 6 màn hình (Login, Overview, DeviceDetail, Events, Diagnostics, Settings) — `docs/02_design/wireframes.md`.
+- M3: `ToastStack` component (`webapp/src/components/Toast.tsx`) — top-right, max 5 stack, group theo `code` (5s window), auto-dismiss 8s cho info/warning, manual cho critical.
+- M3: `useToasts` Zustand store (`webapp/src/store/toasts.ts`) với group/remove/clear actions.
+- M3: Wire toast vào `OverviewPage`: nhận `event` (critical/warning) + `status` (state transition online→error) qua WebSocket, push toast real-time.
+- M3: Pulse animation cho state dot `error` đã có (D-22) — confirm spec.
+- M3: New DECISIONS D-50 (xem DECISIONS.md).
 
 ## [0.3.0] - 2026-08-30
 
@@ -125,6 +136,7 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 - N/A (chưa có code ở M0).
 
 [Unreleased]: #
+[0.4.0]: #
 [0.3.0]: #
 [0.2.1]: #
 [0.2.0]: #

@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Plan UI/UX Concept
@@ -139,8 +139,10 @@ Test target: **1024×768 (iPad ngang)**.
 - Custom theme per user (chỉ dark/light toggle).
 - Mobile-first design.
 
-## 10. Tài liệu liên quan
+## 11. Tài liệu liên quan (M3)
 
+- [Design System](../02_design/design_system.md) — nguồn chân lý design tokens + components spec.
+- [Wireframes](../02_design/wireframes.md) — 6 màn hình ASCII cho review.
 - [Plan Overview](./plan_overview.md)
 - [Plan Data Pipeline](./plan_data_pipeline.md)
 - [Plan Webapp Architecture](./plan_webapp_architecture.md)
@@ -149,3 +151,4 @@ Test target: **1024×768 (iPad ngang)**.
 ## Change history
 
 - 2026-08-30: Tạo plan_uiux_concept.md (M0).
+- 2026-08-30: M3 — link tới design_system.md và wireframes.md (đã chốt UI/UX).
