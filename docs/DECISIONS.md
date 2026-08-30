@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.3.0
+version: 1.4.0
 ---
 
 # Architecture Decisions
@@ -331,6 +331,26 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - **Lý do:** Ecosystem lớn, dễ tuyển người; build nhanh; TanStack Query xử lý cache/refetch tốt; Zustand nhẹ, persisted to localStorage cho auth/theme.
 - **Hệ quả:** SPA nhẹ (~250 KB JS unzipped), code splitting lazy-load pages, source maps cho debug.
 
+## D-51 — Chart library: uPlot (M4)
+- **Quyết định:** Sử dụng **uPlot** 1.6.31 cho time-series chart.
+- **Lý do:** Benchmark cho thấy uPlot nhanh hơn Chart.js/ECharts cho time-series hàng chục nghìn điểm với FPS cao. Bundle nhỏ (~50KB gzipped). API đơn giản.
+- **Hệ quả:** `TimeSeriesChart` component wrap uPlot, dùng cho register history trong Telemetry tab.
+
+## D-52 — Gauge library: ECharts core (M4)
+- **Quyết định:** Sử dụng **ECharts core + GaugeChart** 5.5.1 cho gauge (không dùng echarts-for-react vì cần fine-grained control).
+- **Lý do:** ECharts gauge có API phong phú, performance tốt, custom theme dễ. Core import nhẹ hơn full bundle.
+- **Hệ quả:** `Gauge` component khởi tạo ECharts instance, dispose khi unmount. Có thể mở rộng thêm chart types ở phase sau.
+
+## D-53 — TimeRange quick ranges (M4)
+- **Quyết định:** Quick ranges 5m/15m/1h/6h/24h/7d + Custom datetime (2 inputs from/to). Default 1h cho Telemetry, 24h cho Events.
+- **Lý do:** Pattern Grafana — operator chọn nhanh range thường dùng, mở rộng custom khi cần điều tra sự cố. Default 1h cho Telemetry cân bằng detail vs perf.
+- **Hệ quả:** `TimeRangePicker` + `timeRange.ts` utility. Reuse được ở Telemetry tab + Events page.
+
+## D-54 — Events filter pattern (M4)
+- **Quyết định:** Severity buttons (all/critical/warning/info) + Code multi-select chips (top 13 codes phổ biến) + time range picker.
+- **Lý do:** Top 13 codes bao gồm 80%+ events thực tế. Multi-select chips UX nhanh hơn dropdown. Filter đẩy xuống URL params ở phase sau.
+- **Hệ quả:** `EventsPage` filter gọi `/api/events?severity=X&code=A,B&from=&to=` — đã support từ M1.
+
 ## D-50 — Toast UX (M3)
 - **Quyết định:** Toast top-right fixed, max 5 stack, group theo `device_id+code` trong 5s window (count++), auto-dismiss 8s cho `info`/`warning`, manual cho `critical`. ARIA `aria-live="assertive"` cho critical, `polite` cho info/warning. Sound OFF default, toggle trong user menu (D-07).
 - **Lý do:** D-07 chốt. Group rule tránh spam khi cùng event bùng nổ. ARIA quan trọng cho operator khiếm thị. State transition (online→error) cũng push toast.
@@ -416,3 +436,4 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - 2026-08-30: Bump lên v1.1.0 — thêm D-43, D-44, D-45, D-46 từ QA M1 review (idempotent logout, login rate-limit, MQTT consumer fail-safe, test isolation).
 - 2026-08-30: Bump lên v1.2.0 — thêm D-47, D-48, D-49 từ M2 (frontend stack React+TanStack+Zustand, ReconnectingWs class, nginx proxy).
 - 2026-08-30: Bump lên v1.3.0 — thêm D-50 từ M3 (toast UX: group, auto-dismiss, ARIA, wire vào Overview).
+- 2026-08-30: Bump lên v1.4.0 — thêm D-51..D-54 từ M4 (uPlot time-series, ECharts gauge, time range quick ranges, events filter pattern).

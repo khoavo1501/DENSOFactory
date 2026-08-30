@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.2.0
+version: 1.3.0
 ---
 
 # Documentation Index
@@ -15,7 +15,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## 1. Quy tắc chung
 
 - [File Management Standard](./FILE_MANAGEMENT.md) — chuẩn đặt tên, phân loại, vòng đời tài liệu.
-- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho quyết định kiến trúc đã chốt (D-01 → D-50).
+- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho quyết định kiến trúc đã chốt (D-01 → D-54).
 
 ## 2. Kế hoạch (`01_plan/`)
 
@@ -55,5 +55,6 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## Change history
 
 - 2026-08-30: Tạo mục lục dự án (M0).
+- 2026-08-30: Bump lên v1.3.0 — D-51..D-54 (M4 chart, gauge, time range, event filter).
 - 2026-08-30: Bump lên v1.2.0 — link design_system.md + wireframes.md (M3), D-50.
 - 2026-08-30: Bump lên v1.1.0 — bổ sung link webapp_architecture.md, api_reference.md, runbook, git_workflow, cập nhật số quyết định (M2).

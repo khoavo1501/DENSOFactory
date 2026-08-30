@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Wireframes
@@ -284,3 +284,4 @@ Tablet 1024–1279px: 2 col grid, gauge -20% size.
 ## Change history
 
 - 2026-08-30: Tạo wireframes.md (M3, v1.0.0) — 6 màn hình + toast + responsive + state transitions.
+- 2026-08-30: M4 — note trạng thái delivered: Login (M2), Overview (M2), DeviceDetail (M4 với tabs Telemetry/Status/Events/Diag/Info), Events (M4 với time range + code multi-select), Diagnostics (M2), Settings (M2).

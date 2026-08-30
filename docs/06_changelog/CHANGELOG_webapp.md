@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 0.4.0
+version: 0.5.0
 ---
 
 # Webapp Changelog
@@ -14,6 +14,25 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 Định dạng theo [keep-a-changelog](https://keepachangelog.com/vi-VN/1.1.0/).
 
 ## [Unreleased]
+
+## [0.5.0] - 2026-08-30
+
+### Added
+- M4: Device Detail hoàn chỉnh với 5 tabs (Telemetry / Status / Events / Diag / Info).
+- M4: Tabs component (`webapp/src/components/Tabs.tsx`) với ARIA tablist/tabpanel.
+- M4: TimeRangePicker (`webapp/src/components/TimeRangePicker.tsx`) — quick ranges 5m/15m/1h/6h/24h/7d + custom datetime.
+- M4: TimeSeriesChart (`webapp/src/components/TimeSeriesChart.tsx`) dùng **uPlot**, time-series hiệu năng cao cho register history.
+- M4: Gauge (`webapp/src/components/Gauge.tsx`) dùng **ECharts** cho "main register" — pointer, min/max, unit.
+- M4: timeRange utilities (`webapp/src/utils/timeRange.ts`) — resolveRange/formatDateTime.
+- M4: Telemetry tab layout: register list (left, 240px) + gauge + history chart (right). Single column khi <1280px.
+- M4: Status tab — kv grid hiển thị state/uptime/reason/last update.
+- M4: Events tab trong Device Detail — list 100 event gần nhất, severity chip.
+- M4: Diag tab — latest diag row từ Postgres với kv grid.
+- M4: Info tab — placeholder cho master metadata (info payload, live only per spec mục 7.2).
+- M4: Events page — time range picker + code multi-select filter (top 13 codes từ enum đóng).
+- M4: Responsive tablet (1024-1279) — gauge -20% size, telemetry-grid collapses to 1 column.
+- M4: New dependencies: `uplot` 1.6.31, `echarts` 5.5.1, `echarts-for-react` 3.0.2.
+- M4: New DECISIONS D-51..D-54 (xem DECISIONS.md).
 
 ## [0.4.0] - 2026-08-30
 
@@ -136,6 +155,7 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 - N/A (chưa có code ở M0).
 
 [Unreleased]: #
+[0.5.0]: #
 [0.4.0]: #
 [0.3.0]: #
 [0.2.1]: #
