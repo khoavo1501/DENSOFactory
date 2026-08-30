@@ -1,0 +1,98 @@
+name: iigw
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: iigw
+      POSTGRES_PASSWORD: iigw
+      POSTGRES_DB: iigw
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iigw"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  influxdb:
+    image: influxdb:2.7-alpine
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: iigw
+      DOCKER_INFLUXDB_INIT_PASSWORD: iigw-dev-token
+      DOCKER_INFLUXDB_INIT_ORG: iigw
+      DOCKER_INFLUXDB_INIT_BUCKET: telemetry
+      DOCKER_INFLUXDB_INIT_RETENTION: 30d
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: iigw-dev-token
+    volumes:
+      - influxdata:/var/lib/influxdb2
+    ports:
+      - "8086:8086"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8086/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  emqx:
+    image: emqx/emqx:5.6.1
+    environment:
+      EMQX_NAME: emqx
+      EMQX_HOST: 0.0.0.0
+    ports:
+      - "1883:1883"
+      - "18083:18083"
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://iigw:iigw@postgres:5432/iigw
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: iigw-dev-token
+      INFLUXDB_ORG: iigw
+      INFLUXDB_BUCKET: telemetry
+      MQTT_BROKER_HOST: emqx
+      MQTT_BROKER_PORT: "1883"
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
+      COOKIE_SECURE: "false"
+      EXPORT_MAX_ROWS: "100000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./docs:/app/docs:ro
+
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    environment:
+      MQTT_BROKER_HOST: emqx
+      MQTT_BROKER_PORT: "1883"
+      SIMULATOR_DEVICE_IDS: "SIM_LINE_A_01,SIM_LINE_A_02,SIM_LINE_B_01"
+      SIMULATOR_TELEMETRY_INTERVAL: "2.0"
+      SIMULATOR_STATUS_INTERVAL: "30.0"
+    depends_on:
+      emqx:
+        condition: service_healthy
+    profiles: ["with-simulator"]
+
+volumes:
+  pgdata:
+  influxdata:
