@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import delete, text
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -21,12 +21,11 @@ _log = logging.getLogger(__name__)
 
 def purge_diag(db: Session) -> int:
     settings = get_settings()
-    cutoff = int(
+    cutoff_ts = int(
         (datetime.now(tz=timezone.utc) - timedelta(days=settings.DIAG_RETENTION_DAYS)).timestamp()
     )
     result = db.execute(
-        text("DELETE FROM device_diag WHERE ts < :cutoff"),
-        {"cutoff": cutoff},
+        delete(DeviceDiag).where(DeviceDiag.ts < cutoff_ts)
     )
     db.commit()
     deleted = result.rowcount or 0

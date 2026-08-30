@@ -18,7 +18,7 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
-# Copy application code
+# Copy application code (includes master_protocol_v1.json at /app/)
 COPY . /app/
 
 EXPOSE 8000

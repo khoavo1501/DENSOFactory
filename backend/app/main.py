@@ -10,10 +10,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+# `os` is used in lifespan to gate MQTT consumer in test mode.
+_ = os  # silence unused-import warnings if any.
+
 from app.api import admin, auth, devices, events, exports
 from app.api.middleware_csrf import csrf_protect
 from app.core.config import get_settings
 from app.db.session import SessionLocal
+from app.mqtt.consumer import get_consumer
 from app.services import cleanup
 from app.services.bootstrap import ensure_admin
 from app.ws.hub import router as ws_router
@@ -61,8 +65,17 @@ async def lifespan(app: FastAPI):
         db.close()
 
     sched = _setup_scheduler()
-    yield
-    sched.shutdown(wait=False)
+    consumer = get_consumer()
+    # Skip MQTT consumer in test mode (no broker available)
+    if os.environ.get("APP_ENV") != "test":
+        await consumer.start()
+        _log.info("mqtt consumer started")
+    try:
+        yield
+    finally:
+        if os.environ.get("APP_ENV") != "test":
+            await consumer.stop()
+        sched.shutdown(wait=False)
 
 
 def create_app() -> FastAPI:

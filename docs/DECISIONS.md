@@ -5,13 +5,13 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Architecture Decisions
 
 > Nguồn chân lý chính thức cho mọi quyết định kiến trúc đã chốt qua các vòng hội thoại planning.
-> Mỗi quyết định có: **ID** (D-XX), **chủ đề**, **quyết định**, **lý do**, **hệ quả**, **tham chiếu**.
+> Hiện có **46 quyết định** (D-01 → D-46). Mỗi quyết định có: **ID**, **chủ đề**, **quyết định**, **lý do**, **hệ quả**, **tham chiếu**.
 
 Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry mới với `superseded_by: D-XX` và giữ lịch sử để truy vết.
 
@@ -19,11 +19,11 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 
 ## Mục lục
 
-- D-01 → D-10: Phase Plan (UI/UX, switch nguồn, retention linh hoạt)
-- D-11 → D-20: Auth & Security (JWT, CSRF, cookie matrix, secret rotation)
+- D-01 → D-13: Phase Plan (UI/UX, switch nguồn, retention linh hoạt, idempotent logout, login rate-limit, MQTT consumer fail-safe, test isolation)
+- D-14 → D-20: Auth & Security (JWT, CSRF, cookie matrix, secret rotation)
 - D-21 → D-30: Data & Backend (DB, env vars, file location, pattern inference)
-- D-31 → D-40: Operations (Docker, retention defaults, audit, export)
-- D-41 → D-50: Docs & File Management (cấu trúc docs, payload_spec move, version policy)
+- D-31 → D-42: Operations + Docs & File Management (Docker, retention defaults, audit, export, cấu trúc docs, payload_spec move, version policy)
+- D-43 → D-46: Additions từ QA M1 review (idempotent logout, rate-limit, consumer fail-safe, test isolation)
 
 ---
 
@@ -306,6 +306,26 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - **Quyết định (M0):** Chưa cần template riêng cho PR docs. Dùng chung hoặc không template.
 - **Lý do:** 1–2 PR đầu, thêm sớm là over-engineering. Tách riêng khi nhiều người cùng đóng góp tài liệu và cần checklist riêng.
 
+## D-43 — Idempotent logout
+- **Quyết định:** Logout với cùng `rt` (double-logout) không raise 500; ghi audit nhưng skip insert vào `revoked_refresh` nếu jti đã tồn tại.
+- **Lý do:** Tránh 500 error khi client gửi logout 2 lần liên tiếp.
+- **Hệ quả:** Endpoint luôn trả 204; audit log ghi `auth.logout` dù duplicate.
+
+## D-44 — Login rate-limit
+- **Quyết định:** 5 attempts/min/IP cho `/api/auth/login`, 30/min/IP cho `/api/auth/refresh`. Skip khi `APP_ENV=test`.
+- **Lý do:** Chống brute-force + DoS qua spam login. In-memory sliding window, multi-instance cần Redis ở phase sau.
+- **Hệ quả:** Sau 5 fail/wrong password trong 60s, login trả 429.
+
+## D-45 — MQTT consumer fail-safe
+- **Quyết định:** Consumer `aiomqtt` retry với exponential backoff (1s → 30s cap) khi mất kết nối broker; schema reload khi mtime đổi (không restart).
+- **Lý do:** Spec mục 7.1 yêu cầu "sửa master_protocol_v1.json có hiệu lực ngay, không cần restart backend". Lỗi mạng không nên crash app.
+- **Hệ quả:** Backend chịu được broker down, schema hot-reload.
+
+## D-46 — Test isolation
+- **Quyết định:** Integration test (TestClient + Postgres) chạy với `APP_ENV=test` (skip MQTT consumer, skip rate-limit), truncate tables trước mỗi test.
+- **Lý do:** Test nhanh, deterministic, không cần broker/MQTT runtime.
+- **Hệ quả:** 17 test pass trong ~5s; test suite chạy song song được.
+
 ---
 
 # Phụ lục: Bảng tổng hợp env vars
@@ -373,3 +393,4 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 ## Change history
 
 - 2026-08-30: Tạo file DECISIONS.md (v1.0.0) — tổng hợp 42 quyết định từ 3 vòng hội thoại planning.
+- 2026-08-30: Bump lên v1.1.0 — thêm D-43, D-44, D-45, D-46 từ QA M1 review (idempotent logout, login rate-limit, MQTT consumer fail-safe, test isolation).
