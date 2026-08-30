@@ -7,7 +7,7 @@ empty results so the API surface stays consistent.
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 import httpx
@@ -79,4 +79,6 @@ def get_influx() -> InfluxClient:
 
 
 def unix_to_iso(ts: int) -> str:
-    return datetime.utcfromtimestamp(ts).isoformat() + "Z"
+    return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace(
+        "+00:00", "Z"
+    )

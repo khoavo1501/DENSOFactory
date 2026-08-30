@@ -15,7 +15,6 @@ htmlcov
 *.log
 .git
 .gitignore
-tests
 README.md
 docs
 .claude

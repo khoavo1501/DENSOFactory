@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Master Protocol v1",
+  "description": "Schema for messages published by master (STM32+W5500) to MQTT broker. See docs/99_attachments/payload_spec_v1.md.",
+  "oneOf": [
+    { "$ref": "#/$defs/telemetry" },
+    { "$ref": "#/$defs/status" },
+    { "$ref": "#/$defs/event" },
+    { "$ref": "#/$defs/info" },
+    { "$ref": "#/$defs/diag" }
+  ],
+  "$defs": {
+    "envelope": {
+      "type": "object",
+      "required": ["device_id", "ts", "type"],
+      "properties": {
+        "device_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$"
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "type": {
+          "type": "string",
+          "enum": ["telemetry", "status", "event", "info", "diag"]
+        }
+      }
+    },
+    "telemetry": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "telemetry" },
+            "seq": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+            "fw": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+" },
+            "registers": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 200,
+              "additionalProperties": {
+                "oneOf": [
+                  { "type": "boolean" },
+                  { "type": "integer", "minimum": 0, "maximum": 4294967295 }
+                ]
+              },
+              "patternProperties": {
+                "^(hr|ir)_[0-9]+$": {},
+                "^(co|di)_[0-9]+$": { "type": "boolean" }
+              }
+            }
+          },
+          "required": ["registers"]
+        }
+      ]
+    },
+    "status": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "status" },
+            "state": {
+              "type": "string",
+              "enum": ["online", "offline", "error", "degraded"]
+            },
+            "uptime_s": { "type": "integer", "minimum": 0 },
+            "reason": { "type": "string", "maxLength": 256 }
+          },
+          "required": ["state"]
+        }
+      ]
+    },
+    "event": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "event" },
+            "events": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 50,
+              "items": {
+                "type": "object",
+                "required": ["code", "severity"],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "SLAVE_COMM_LOST", "SLAVE_COMM_RESTORED",
+                      "VALUE_OUT_OF_RANGE", "SENSOR_FAULT",
+                      "EMERGENCY_STOP", "FIRMWARE_UPDATE_START",
+                      "FIRMWARE_UPDATE_END", "CONFIG_CHANGED",
+                      "MASTER_REBOOT", "BUFFER_OVERFLOW",
+                      "WATCHDOG_RESET", "POWER_ON",
+                      "W5500_LINK_DOWN", "W5500_LINK_UP",
+                      "MQTT_DISCONNECTED", "MQTT_RECONNECTED"
+                    ]
+                  },
+                  "severity": {
+                    "type": "string",
+                    "enum": ["info", "warning", "critical"]
+                  },
+                  "message": { "type": "string", "maxLength": 256 },
+                  "source": { "type": "string", "maxLength": 64 },
+                  "context": { "type": "object" }
+                }
+              }
+            }
+          },
+          "required": ["events"]
+        }
+      ]
+    },
+    "info": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "info" },
+            "master": {
+              "type": "object",
+              "required": ["fw_version", "hw_version"],
+              "properties": {
+                "fw_version": {
+                  "type": "string",
+                  "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[A-Za-z0-9.]+)?(\\+[A-Za-z0-9.]+)?$"
+                },
+                "hw_version": { "type": "string", "maxLength": 32 },
+                "ip": { "type": "string", "format": "ipv4" },
+                "mac": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{2}(:[A-F0-9]{2}){5}$"
+                },
+                "rssi": { "type": "integer", "minimum": -120, "maximum": 0 },
+                "free_heap": { "type": "integer", "minimum": 0 },
+                "cpu_temp": { "type": "number", "minimum": -40, "maximum": 125 },
+                "reset_reason": {
+                  "type": "string",
+                  "enum": ["POWER_ON", "WATCHDOG", "SOFT", "HARDWARE", "BROWN_OUT", "UNKNOWN"]
+                },
+                "slaves": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "addr"],
+                    "properties": {
+                      "id": { "type": "integer", "minimum": 1, "maximum": 247 },
+                      "addr": { "type": "integer", "minimum": 1, "maximum": 247 },
+                      "name": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": ["master"]
+        }
+      ]
+    },
+    "diag": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "diag" },
+            "stats": {
+              "type": "object",
+              "required": ["poll_cycle_ms", "slaves"],
+              "properties": {
+                "poll_cycle_ms": { "type": "integer", "minimum": 0 },
+                "uptime_s": { "type": "integer", "minimum": 0 },
+                "tx_packets": { "type": "integer", "minimum": 0 },
+                "tx_failures": { "type": "integer", "minimum": 0 },
+                "mqtt_reconnect": { "type": "integer", "minimum": 0 },
+                "avg_latency_ms": { "type": "number", "minimum": 0 },
+                "slaves": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "addr", "ok", "fail"],
+                    "properties": {
+                      "id": { "type": "integer", "minimum": 1, "maximum": 247 },
+                      "addr": { "type": "integer", "minimum": 1, "maximum": 247 },
+                      "ok": { "type": "integer", "minimum": 0 },
+                      "fail": { "type": "integer", "minimum": 0 },
+                      "last_ok_ts": { "type": "integer", "minimum": 0 },
+                      "avg_latency_ms": { "type": "number", "minimum": 0 }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": ["stats"]
+        }
+      ]
+    }
+  }
+}

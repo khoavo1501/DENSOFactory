@@ -42,6 +42,10 @@ class TelemetryPoint(BaseModel):
 
 
 class StatusOut(BaseModel):
+    # exclude_none: spec mục 3.3 forbids "reason": null; producer must
+    # omit the field. Our response should also omit it rather than emit null.
+    model_config = ConfigDict(exclude_none=True)
+
     state: str
     uptime_s: Optional[int] = None
     reason: Optional[str] = None
@@ -49,6 +53,9 @@ class StatusOut(BaseModel):
 
 
 class EventOut(BaseModel):
+    # spec mục 4.1 forbids "context": null. We never emit null fields.
+    model_config = ConfigDict(exclude_none=True)
+
     ts: int
     code: str
     severity: str
