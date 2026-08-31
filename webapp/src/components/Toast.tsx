@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import clsx from "clsx";
 import { useToasts, type ToastItem } from "@/store/toasts";
+import { useSound, playCriticalBeep } from "@/store";
 import { SeverityChip } from "./Indicators";
 
 const AUTO_DISMISS_MS = 8000;
@@ -15,8 +16,17 @@ function relativeTime(ts: number): string {
 
 function ToastCard({ toast }: { toast: ToastItem }) {
   const remove = useToasts((s) => s.remove);
+  const soundEnabled = useSound((s) => s.soundEnabled);
   const isCritical = toast.severity === "critical";
   const timerRef = useRef<number | null>(null);
+
+  // Play beep on first mount of a critical toast (D-07 sound toggle)
+  useEffect(() => {
+    if (isCritical && soundEnabled) {
+      playCriticalBeep();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast.id]);
 
   useEffect(() => {
     if (isCritical) return; // critical: manual dismiss only
@@ -61,8 +71,18 @@ function ToastCard({ toast }: { toast: ToastItem }) {
 
 export function ToastStack() {
   const toasts = useToasts((s) => s.toasts);
+  const clear = useToasts((s) => s.clear);
   return (
     <div className="toast-stack" role="region" aria-label="Notifications">
+      {toasts.length > 1 && (
+        <button
+          className="btn toast-clear-all"
+          onClick={clear}
+          title="Dismiss all toasts"
+        >
+          Clear all ({toasts.length})
+        </button>
+      )}
       {toasts.map((t) => (
         <ToastCard key={t.id} toast={t} />
       ))}

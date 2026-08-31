@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useAuth, useTheme } from "@/store";
+import { useAuth, useTheme, useSound } from "@/store";
 import { authApi } from "@/api/endpoints";
 import { ApiError } from "@/api/client";
 import { ToastStack } from "./Toast";
@@ -8,6 +8,7 @@ import { ToastStack } from "./Toast";
 export function Shell() {
   const { user, setUser } = useAuth();
   const { theme, toggle } = useTheme();
+  const { soundEnabled, toggleSound } = useSound();
   const [railExpanded, setRailExpanded] = useState(false);
   const navigate = useNavigate();
 
@@ -42,6 +43,13 @@ export function Shell() {
         <div className="brand">IIoT Gateway</div>
         <span className="env-chip">dev</span>
         <div className="spacer" />
+        <button
+          className="btn btn-ghost"
+          onClick={toggleSound}
+          title={soundEnabled ? "Sound on" : "Sound off"}
+        >
+          {soundEnabled ? "🔊" : "🔇"}
+        </button>
         <button
           className="btn btn-ghost"
           onClick={toggle}

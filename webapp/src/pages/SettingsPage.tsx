@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
-import { adminApi, devicesApi } from "@/api/endpoints";
+import { adminApi, devicesApi, exportsApi } from "@/api/endpoints";
 import { useAuth } from "@/store";
 import { SourceBadge } from "@/components/Indicators";
-import type { DeviceSource, Source } from "@/types";
+import { resolveRange } from "@/utils/timeRange";
+import type { DeviceSource, Source, User } from "@/types";
 
 export function SettingsPage() {
   const { user } = useAuth();
@@ -17,9 +18,10 @@ export function SettingsPage() {
   return (
     <div>
       <h1 style={{ margin: "0 0 12px", fontSize: 16 }}>Settings</h1>
-
       <SimulatorPanel />
       <SourceMappingPanel />
+      <UserManagementPanel />
+      <ExportPanel />
     </div>
   );
 
@@ -39,7 +41,7 @@ export function SettingsPage() {
     });
 
     return (
-      <div className="card" style={{ marginBottom: 12 }}>
+      <div className="card settings-section">
         <div className="card-header">
           <span className="card-title">Simulator Service</span>
           <span
@@ -94,7 +96,7 @@ export function SettingsPage() {
     const [newSource, setNewSource] = useState<Source>("simulated");
 
     return (
-      <div className="card">
+      <div className="card settings-section">
         <div className="card-header">
           <span className="card-title">Source Mapping</span>
           <span className="muted" style={{ marginLeft: "auto", fontSize: 11 }}>
@@ -102,12 +104,12 @@ export function SettingsPage() {
           </span>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <div className="user-form">
           <input
             value={newId}
             onChange={(e) => setNewId(e.target.value)}
             placeholder="DEVICE_ID"
-            style={{ flex: 1, fontFamily: "var(--font-mono)" }}
+            style={{ fontFamily: "var(--font-mono)" }}
           />
           <select
             value={newSource}
@@ -168,6 +170,325 @@ export function SettingsPage() {
             ))}
           </tbody>
         </table>
+      </div>
+    );
+  }
+
+  function UserManagementPanel() {
+    const { data: users } = useQuery({
+      queryKey: ["admin-users"],
+      queryFn: () => adminApi.listUsers(),
+    });
+    const createMut = useMutation({
+      mutationFn: ({
+        username,
+        password,
+        role,
+      }: {
+        username: string;
+        password: string;
+        role: "admin" | "viewer";
+      }) => adminApi.createUser(username, password, role),
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ["admin-users"] });
+        setNewUsername("");
+        setNewPassword("");
+      },
+    });
+    const roleMut = useMutation({
+      mutationFn: ({ username, role }: { username: string; role: "admin" | "viewer" }) =>
+        adminApi.setUserRole(username, role),
+      onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-users"] }),
+    });
+    const passwordMut = useMutation({
+      mutationFn: ({ username, password }: { username: string; password: string }) =>
+        adminApi.setUserPassword(username, password),
+      onSuccess: () => {
+        setPwTarget(null);
+        setNewPassword("");
+      },
+    });
+    const deleteMut = useMutation({
+      mutationFn: (username: string) => adminApi.deleteUser(username),
+      onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-users"] }),
+    });
+
+    const [newUsername, setNewUsername] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [newRole, setNewRole] = useState<"admin" | "viewer">("viewer");
+    const [pwTarget, setPwTarget] = useState<string | null>(null);
+
+    return (
+      <div className="card settings-section">
+        <div className="card-header">
+          <span className="card-title">User Management</span>
+          <span className="muted" style={{ marginLeft: "auto", fontSize: 11 }}>
+            {users?.length ?? 0} user{(users?.length ?? 0) === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        <div className="user-form">
+          <input
+            type="text"
+            value={newUsername}
+            onChange={(e) => setNewUsername(e.target.value)}
+            placeholder="username"
+          />
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="password (>=8 chars)"
+          />
+          <select
+            value={newRole}
+            onChange={(e) => setNewRole(e.target.value as "admin" | "viewer")}
+          >
+            <option value="viewer">viewer</option>
+            <option value="admin">admin</option>
+          </select>
+          <button
+            className="btn btn-primary"
+            disabled={
+              !newUsername ||
+              newPassword.length < 8 ||
+              createMut.isPending
+            }
+            onClick={() =>
+              createMut.mutate({
+                username: newUsername,
+                password: newPassword,
+                role: newRole,
+              })
+            }
+          >
+            Add
+          </button>
+        </div>
+        {createMut.error && (
+          <div className="error-msg" style={{ marginBottom: 8 }}>
+            {(createMut.error as Error).message}
+          </div>
+        )}
+
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid var(--border)" }}>
+              <th style={th}>Username</th>
+              <th style={th}>Role</th>
+              <th style={th}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users?.map((u: User) => (
+              <tr key={u.username} style={{ borderBottom: "1px solid var(--border)" }}>
+                <td style={td} className="mono">
+                  {u.username}
+                </td>
+                <td style={td}>
+                  <select
+                    value={u.role}
+                    disabled={u.username === user?.username}
+                    onChange={(e) =>
+                      roleMut.mutate({
+                        username: u.username,
+                        role: e.target.value as "admin" | "viewer",
+                      })
+                    }
+                    style={{ height: 24, fontSize: 11 }}
+                  >
+                    <option value="viewer">viewer</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </td>
+                <td style={{ ...td, textAlign: "right" }}>
+                  {pwTarget === u.username ? (
+                    <>
+                      <input
+                        type="password"
+                        placeholder="new password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        style={{
+                          width: 140,
+                          height: 24,
+                          fontSize: 11,
+                          marginRight: 4,
+                        }}
+                      />
+                      <button
+                        className="btn btn-primary"
+                        disabled={
+                          newPassword.length < 8 || passwordMut.isPending
+                        }
+                        onClick={() =>
+                          passwordMut.mutate({
+                            username: u.username,
+                            password: newPassword,
+                          })
+                        }
+                        style={{ height: 24, padding: "0 8px", fontSize: 11 }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="btn btn-ghost"
+                        onClick={() => {
+                          setPwTarget(null);
+                          setNewPassword("");
+                        }}
+                        style={{ height: 24, padding: "0 8px", fontSize: 11 }}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="btn btn-ghost"
+                        onClick={() => setPwTarget(u.username)}
+                        style={{ height: 24, padding: "0 8px", fontSize: 11 }}
+                      >
+                        Set password
+                      </button>
+                      {u.username !== user?.username && (
+                        <button
+                          className="btn btn-ghost"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                `Delete user "${u.username}"? This cannot be undone.`
+                              )
+                            ) {
+                              deleteMut.mutate(u.username);
+                            }
+                          }}
+                          style={{
+                            height: 24,
+                            padding: "0 8px",
+                            fontSize: 11,
+                            color: "var(--severity-critical)",
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  function ExportPanel() {
+    const [deviceId, setDeviceId] = useState("SIM_LINE_A_01");
+    const [register, setRegister] = useState("hr_100");
+    const [format, setFormat] = useState<"csv" | "xlsx">("csv");
+    const [busy, setBusy] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    const range = resolveRange("24h");
+
+    const handle = async (kind: "telemetry" | "events" | "diag") => {
+      setBusy(kind);
+      setError(null);
+      try {
+        const params: Record<string, string | number> = { from: range.from, to: range.to };
+        if (kind === "telemetry") {
+          params.device_id = deviceId;
+          params.register = register;
+        } else if (kind === "diag") {
+          params.device_id = deviceId;
+        } else {
+          // events: optional device filter
+          params.device_id = deviceId;
+        }
+        const blob = await exportsApi.download(kind, params, format);
+        const ext = format === "xlsx" ? "xlsx" : "csv";
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${kind}_${deviceId}_${range.from}-${range.to}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        setError((e as Error).message);
+      } finally {
+        setBusy(null);
+      }
+    };
+
+    return (
+      <div className="card settings-section">
+        <div className="card-header">
+          <span className="card-title">Export</span>
+          <span className="muted" style={{ marginLeft: "auto", fontSize: 11 }}>
+            Last 24h · max 100,000 rows
+          </span>
+        </div>
+
+        <div className="user-form" style={{ marginBottom: 8 }}>
+          <input
+            value={deviceId}
+            onChange={(e) => setDeviceId(e.target.value)}
+            placeholder="device_id"
+            style={{ fontFamily: "var(--font-mono)" }}
+          />
+          <input
+            value={register}
+            onChange={(e) => setRegister(e.target.value)}
+            placeholder="register (telemetry only)"
+            style={{ fontFamily: "var(--font-mono)" }}
+          />
+          <select value={format} onChange={(e) => setFormat(e.target.value as "csv" | "xlsx")}>
+            <option value="csv">CSV</option>
+            <option value="xlsx">XLSX</option>
+          </select>
+        </div>
+
+        {error && <div className="error-msg" style={{ marginBottom: 8 }}>{error}</div>}
+
+        <div className="export-grid">
+          <div className="export-card">
+            <h4>Telemetry</h4>
+            <p>Register history for one device_id + register.</p>
+            <button
+              className="btn btn-primary"
+              disabled={busy !== null || !deviceId || !register}
+              onClick={() => handle("telemetry")}
+            >
+              {busy === "telemetry" ? "Downloading..." : "Download"}
+            </button>
+          </div>
+          <div className="export-card">
+            <h4>Events</h4>
+            <p>Event feed filtered by device (last 24h).</p>
+            <button
+              className="btn btn-primary"
+              disabled={busy !== null}
+              onClick={() => handle("events")}
+            >
+              {busy === "events" ? "Downloading..." : "Download"}
+            </button>
+          </div>
+          <div className="export-card">
+            <h4>Diag</h4>
+            <p>Diag history for one device_id (last 24h).</p>
+            <button
+              className="btn btn-primary"
+              disabled={busy !== null || !deviceId}
+              onClick={() => handle("diag")}
+            >
+              {busy === "diag" ? "Downloading..." : "Download"}
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

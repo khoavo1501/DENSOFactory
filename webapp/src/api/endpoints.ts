@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, ApiError } from "./client";
 import type {
   Device,
   DeviceSource,
@@ -78,4 +78,58 @@ export const adminApi = {
     api<{ running: boolean; device_ids: string[] }>("/admin/simulator/stop", {
       method: "POST",
     }),
+  // User management (M5)
+  listUsers: () => api<User[]>("/admin/users"),
+  createUser: (username: string, password: string, role: "admin" | "viewer") =>
+    api<User>("/admin/users", {
+      method: "POST",
+      body: { username, password, role },
+    }),
+  setUserRole: (username: string, role: "admin" | "viewer") =>
+    api<User>(`/admin/users/${encodeURIComponent(username)}/role`, {
+      method: "PATCH",
+      body: { role },
+    }),
+  setUserPassword: (username: string, password: string) =>
+    api<void>(`/admin/users/${encodeURIComponent(username)}/password`, {
+      method: "PATCH",
+      body: { password },
+    }),
+  deleteUser: (username: string) =>
+    api<void>(`/admin/users/${encodeURIComponent(username)}`, {
+      method: "DELETE",
+    }),
 };
+
+// Export endpoints (M5) — returns Blob, not JSON.
+export const exportsApi = {
+  async download(
+    kind: "telemetry" | "events" | "diag",
+    params: Record<string, string | number>,
+    format: "csv" | "xlsx" = "csv"
+  ): Promise<Blob> {
+    const qs = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) qs.set(k, String(v));
+    qs.set("format", format);
+    const csrf = getCookie("csrf");
+    const headers: Record<string, string> = {};
+    if (csrf) headers["X-CSRF-Token"] = csrf;
+    const r = await fetch(`/api/exports/${kind}?${qs.toString()}`, {
+      method: "GET",
+      credentials: "include",
+      headers,
+    });
+    if (!r.ok) {
+      const txt = await r.text();
+      throw new ApiError(txt || `HTTP ${r.status}`, r.status, txt);
+    }
+    return r.blob();
+  },
+};
+
+function getCookie(name: string): string | null {
+  const m = document.cookie.match(
+    new RegExp("(?:^|; )" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "=([^;]*)")
+  );
+  return m ? decodeURIComponent(m[1]) : null;
+}

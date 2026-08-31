@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { eventsApi } from "@/api/endpoints";
+import { devicesApi, eventsApi } from "@/api/endpoints";
 import { SeverityChip } from "@/components/Indicators";
 import { TimeRangePicker } from "@/components/TimeRangePicker";
 import { resolveRange } from "@/utils/timeRange";
-import type { EventItem, Severity, EventCode } from "@/types";
+import type { EventItem, Severity, EventCode, Device } from "@/types";
 
 const SEVERITY_FILTERS: Array<"all" | Severity> = [
   "all",
@@ -33,19 +33,28 @@ const COMMON_CODES: EventCode[] = [
 export function EventsPage() {
   const [severity, setSeverity] = useState<"all" | Severity>("all");
   const [codes, setCodes] = useState<Set<EventCode>>(new Set());
+  const [deviceId, setDeviceId] = useState<string>("");
   const [page, setPage] = useState(1);
   const [range, setRange] = useState(() => resolveRange("24h"));
   const pageSize = 50;
 
+  const { data: devices } = useQuery<Device[]>({
+    queryKey: ["devices-list"],
+    queryFn: () => devicesApi.list() as Promise<Device[]>,
+    refetchInterval: 30_000,
+  });
+
   const codeParam = codes.size > 0 ? Array.from(codes).join(",") : undefined;
   const severityParam = severity === "all" ? undefined : severity;
+  const deviceParam = deviceId || undefined;
 
   const { data, isLoading } = useQuery<EventItem[]>({
-    queryKey: ["events", severityParam, codeParam, range, page],
+    queryKey: ["events", severityParam, codeParam, deviceParam, range, page],
     queryFn: () =>
       eventsApi.list({
         severity: severityParam,
         code: codeParam,
+        device_id: deviceParam,
         from: range.from,
         to: range.to,
         page,
@@ -117,6 +126,26 @@ export function EventsPage() {
               </button>
             ))}
           </div>
+        </div>
+        <div>
+          <div className="card-subtitle" style={{ marginBottom: 4 }}>
+            Device
+          </div>
+          <select
+            value={deviceId}
+            onChange={(e) => {
+              setDeviceId(e.target.value);
+              setPage(1);
+            }}
+            style={{ minWidth: 200 }}
+          >
+            <option value="">All devices</option>
+            {devices?.map((d) => (
+              <option key={d.device_id} value={d.device_id}>
+                {d.device_id}
+              </option>
+            ))}
+          </select>
         </div>
         <div style={{ flex: 1, minWidth: 320 }}>
           <div className="card-subtitle" style={{ marginBottom: 4 }}>
