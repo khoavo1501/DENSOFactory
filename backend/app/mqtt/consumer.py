@@ -100,7 +100,11 @@ def _write_to_influx_sync(category: str, payload: dict) -> None:
     token = settings.INFLUXDB_TOKEN
 
     device_id = payload.get("device_id", "")
-    ts_ns = int(payload.get("ts", _now())) * 1_000_000_000
+    # Spec mục 3.2: LWT uses ts=0; server replaces with receive time.
+    raw_ts = int(payload.get("ts", 0) or 0)
+    if raw_ts <= 0:
+        raw_ts = _now()
+    ts_ns = raw_ts * 1_000_000_000
 
     lines: list[str] = []
     if category == "telemetry":

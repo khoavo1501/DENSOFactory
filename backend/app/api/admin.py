@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -18,8 +18,31 @@ from app.schemas.common import (
     UserOut,
 )
 from app.services import audit, device_sources
+from app.ws.hub import get_hub
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+async def _broadcast_source_changed(
+    device_id: str, source: Optional[str], by: str
+) -> None:
+    """Broadcast source_changed on device + system channel.
+
+    Called as a BackgroundTask from sync route handlers; runs on the
+    main event loop so hub.publish (async) can be awaited directly.
+    """
+    import time as _time
+
+    hub = get_hub()
+    msg = {
+        "type": "source_changed",
+        "device_id": device_id,
+        "source": source,
+        "updated_by": by,
+        "ts": int(_time.time()),
+    }
+    for channel in (device_id, "*"):
+        await hub.publish(channel, msg)
 
 
 # ====== User management (M5) ======
@@ -171,6 +194,7 @@ def list_sources(
 def upsert_source(
     device_id: str,
     body: DeviceSourceIn,
+    background: BackgroundTasks,
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_admin),
 ) -> DeviceSourceOut:
@@ -188,6 +212,9 @@ def upsert_source(
         detail={"source": body.source},
     )
     db.commit()
+    background.add_task(
+        _broadcast_source_changed, device_id, body.source, user.username
+    )
     return DeviceSourceOut.model_validate(row)
 
 
@@ -198,6 +225,7 @@ def upsert_source(
 )
 def delete_source(
     device_id: str,
+    background: BackgroundTasks,
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_admin),
 ) -> Response:
@@ -210,6 +238,9 @@ def delete_source(
         target=device_id,
     )
     db.commit()
+    background.add_task(
+        _broadcast_source_changed, device_id, None, user.username
+    )
     return Response(status_code=204)
 
 
