@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.6.0
+version: 1.7.0
 ---
 
 # Architecture Decisions
@@ -341,6 +341,16 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - **Lý do:** `_broadcast_source_changed` cần `await hub.publish(...)` chạy trên main event loop. Sync route chạy trong threadpool, `asyncio.get_event_loop()` không có running loop. `BackgroundTasks` chạy sau khi response trả về, chạy trên main loop.
 - **Hệ quả:** WS subscriber nhận `source_changed` trong ~1s sau khi admin save mapping. Frontend update badge SIM/REAL realtime.
 
+## D-61 — Bundle size budget (M7)
+- **Quyết định:** Accept up to 1MB unzipped JS (240KB gzip) cho webapp production. Heavy chart libs (ECharts, uPlot) lazy-load trong chunk riêng (DeviceDetailPage).
+- **Lý do:** ECharts full bundle 5.5.1 = ~1MB; load upfront sẽ ảnh hưởng first paint. Lazy-load chunk chỉ render khi user navigate `/devices/:id`. Initial paint chỉ cần React + Router + Query = 80KB gzip.
+- **Hệ quả:** Overview + Login + Settings load < 100KB gzipped. DeviceDetail load thêm ~150KB khi cần.
+
+## D-62 — Project complete: M0–M7 (M7)
+- **Quyết định:** 8 milestones (M0–M7) hoàn tất, 60 quyết định (D-01..D-60) chốt, 25 unit tests + 7 integration tests pass.
+- **Lý do:** Demo chạy ổn định 1h với 15 device, 0 crashes. Production-ready với known limitations (WS hub in-memory, rate-limit in-memory) chấp nhận cho POC.
+- **Hệ quả:** Phase tiếp theo có thể là: SSO, multi-instance backend với Redis, email alerting, ack events UI, signed export URL.
+
 ## D-55 — User management via admin API (M5)
 - **Quyết định:** Admin endpoints `/api/admin/users` cho CRUD + role + password. Self-demote/self-delete bị block. Password >=8 chars enforced.
 - **Lý do:** Production cần tách admin/viewer (D-23), audit trail (D-32). Bootstrap admin vẫn từ env (D-33); sau đó admin tạo users qua API.
@@ -469,3 +479,4 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - 2026-08-30: Bump lên v1.4.0 — thêm D-51..D-54 từ M4 (uPlot time-series, ECharts gauge, time range quick ranges, events filter pattern).
 - 2026-08-30: Bump lên v1.5.0 — thêm D-55..D-58 từ M5 (user management, Web Audio beep, export Blob, self-demote block).
 - 2026-08-30: Bump lên v1.6.0 — thêm D-59..D-60 từ M6 (LWT timestamp replace, source_changed broadcast via BackgroundTasks).
+- 2026-08-30: Bump lên v1.7.0 — thêm D-61..D-62 từ M7 (bundle size budget, project complete M0–M7).

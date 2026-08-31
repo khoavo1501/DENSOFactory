@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.5.0
+version: 1.6.0
 ---
 
 # Documentation Index
@@ -15,7 +15,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## 1. Quy tắc chung
 
 - [File Management Standard](./FILE_MANAGEMENT.md) — chuẩn đặt tên, phân loại, vòng đời tài liệu.
-- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho quyết định kiến trúc đã chốt (D-01 → D-60).
+- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho quyết định kiến trúc đã chốt (D-01 → D-62).
 
 ## 2. Kế hoạch (`01_plan/`)
 
@@ -38,11 +38,13 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## 5. Vận hành (`04_runbook/`)
 
 - [Runbook Local Dev](./04_runbook/runbook_local_dev.md) — khởi động + troubleshooting.
+- [Runbook Deploy](./04_runbook/runbook_deploy.md) — production setup, security, backup, scale (M7).
 - [Git Workflow](./04_runbook/git_workflow.md) — branch + commit + PR conventions.
 
 ## 6. Test (`05_test/`)
 
 - [Test Report M6](./05_test/test_report_m6.md) — 7 test cases (E2E, switch, LWT, negative, source_changed WS, session refresh, performance), 25/25 unit tests pass.
+- [Test Report M7](./05_test/test_report_m7.md) — final wrap-up: bundle 740KB JS, smoke 1h stable, 25/25 tests, known limitations.
 
 ## 7. Lịch sử thay đổi (`06_changelog/`)
 
@@ -55,6 +57,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## Change history
 
 - 2026-08-30: Tạo mục lục dự án (M0).
+- 2026-08-30: Bump lên v1.6.0 — D-61..D-62 (M7 project complete, bundle budget).
 - 2026-08-30: Bump lên v1.5.0 — D-59..D-60 (M6 LWT fix, source_changed WS broadcast).
 - 2026-08-30: Bump lên v1.4.0 — D-55..D-58 (M5 user management, sound, export, self-demote).
 - 2026-08-30: Bump lên v1.3.0 — D-51..D-54 (M4 chart, gauge, time range, event filter).

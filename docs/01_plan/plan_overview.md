@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 0.1.0
+version: 1.0.0
 ---
 
 # Plan Overview
@@ -92,3 +92,4 @@ Backend/hạ tầng dữ liệu đã có:
 ## Change history
 
 - 2026-08-30: Tạo plan_overview.md (M0).
+- 2026-08-30: Bump lên v1.0.0 — đánh dấu toàn bộ M0–M7 hoàn tất; liệt kê deliverables, known limitations ở `docs/05_test/test_report_m7.md`.

@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 0.7.0
+version: 0.8.0
 ---
 
 # Webapp Changelog
@@ -14,6 +14,15 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 Định dạng theo [keep-a-changelog](https://keepachangelog.com/vi-VN/1.1.0/).
 
 ## [Unreleased]
+
+## [0.8.0] - 2026-08-30
+
+### Added
+- M7: Root `README.md` (project overview, quickstart, stack, structure, all docs links).
+- M7: `docs/04_runbook/runbook_deploy.md` (production setup, security, monitoring, backup, upgrade, scale, DR).
+- M7: `docs/05_test/test_report_m7.md` (bundle analysis 740KB JS, smoke 1h stability, 25/25 unit + 7/7 M6 integration tests, known limitations).
+- M7: `docs/01_plan/plan_overview.md` v1.0.0 (M0–M7 all done).
+- M7: New DECISIONS D-61..D-62 (xem DECISIONS.md).
 
 ## [0.7.0] - 2026-08-30
 
@@ -190,6 +199,7 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 - N/A (chưa có code ở M0).
 
 [Unreleased]: #
+[0.8.0]: #
 [0.7.0]: #
 [0.6.0]: #
 [0.5.0]: #
