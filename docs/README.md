@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.4.0
+version: 1.5.0
 ---
 
 # Documentation Index
@@ -15,7 +15,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## 1. Quy tắc chung
 
 - [File Management Standard](./FILE_MANAGEMENT.md) — chuẩn đặt tên, phân loại, vòng đời tài liệu.
-- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho quyết định kiến trúc đã chốt (D-01 → D-58).
+- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho quyết định kiến trúc đã chốt (D-01 → D-60).
 
 ## 2. Kế hoạch (`01_plan/`)
 
@@ -42,7 +42,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 
 ## 6. Test (`05_test/`)
 
-*(Sẽ bổ sung ở M1+: test plan + report theo phase.)*
+- [Test Report M6](./05_test/test_report_m6.md) — 7 test cases (E2E, switch, LWT, negative, source_changed WS, session refresh, performance), 25/25 unit tests pass.
 
 ## 7. Lịch sử thay đổi (`06_changelog/`)
 
@@ -55,6 +55,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## Change history
 
 - 2026-08-30: Tạo mục lục dự án (M0).
+- 2026-08-30: Bump lên v1.5.0 — D-59..D-60 (M6 LWT fix, source_changed WS broadcast).
 - 2026-08-30: Bump lên v1.4.0 — D-55..D-58 (M5 user management, sound, export, self-demote).
 - 2026-08-30: Bump lên v1.3.0 — D-51..D-54 (M4 chart, gauge, time range, event filter).
 - 2026-08-30: Bump lên v1.2.0 — link design_system.md + wireframes.md (M3), D-50.

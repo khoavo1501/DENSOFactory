@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.5.0
+version: 1.6.0
 ---
 
 # Architecture Decisions
@@ -331,6 +331,16 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - **Lý do:** Ecosystem lớn, dễ tuyển người; build nhanh; TanStack Query xử lý cache/refetch tốt; Zustand nhẹ, persisted to localStorage cho auth/theme.
 - **Hệ quả:** SPA nhẹ (~250 KB JS unzipped), code splitting lazy-load pages, source maps cho debug.
 
+## D-59 — LWT timestamp replace (M6)
+- **Quyết định:** Trước khi ghi InfluxDB, nếu `payload["ts"] <= 0` thì replace bằng `_now()`.
+- **Lý do:** Spec mục 3.2 cho phép `ts=0` cho LWT để server tự fill. Nếu giữ ts=0, point rơi vào epoch 1970, query `range(start:-1h)` không thấy, frontend stale forever.
+- **Hệ quả:** LWT (master disconnect) → state=offline visible ngay trong API. WS broadcast đã có logic tương tự.
+
+## D-60 — source_changed broadcast qua BackgroundTasks (M6)
+- **Quyết định:** Khi admin PUT/DELETE mapping, gọi `BackgroundTasks.add_task(async _broadcast_source_changed, ...)` thay vì gọi trực tiếp trong sync route.
+- **Lý do:** `_broadcast_source_changed` cần `await hub.publish(...)` chạy trên main event loop. Sync route chạy trong threadpool, `asyncio.get_event_loop()` không có running loop. `BackgroundTasks` chạy sau khi response trả về, chạy trên main loop.
+- **Hệ quả:** WS subscriber nhận `source_changed` trong ~1s sau khi admin save mapping. Frontend update badge SIM/REAL realtime.
+
 ## D-55 — User management via admin API (M5)
 - **Quyết định:** Admin endpoints `/api/admin/users` cho CRUD + role + password. Self-demote/self-delete bị block. Password >=8 chars enforced.
 - **Lý do:** Production cần tách admin/viewer (D-23), audit trail (D-32). Bootstrap admin vẫn từ env (D-33); sau đó admin tạo users qua API.
@@ -458,3 +468,4 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - 2026-08-30: Bump lên v1.3.0 — thêm D-50 từ M3 (toast UX: group, auto-dismiss, ARIA, wire vào Overview).
 - 2026-08-30: Bump lên v1.4.0 — thêm D-51..D-54 từ M4 (uPlot time-series, ECharts gauge, time range quick ranges, events filter pattern).
 - 2026-08-30: Bump lên v1.5.0 — thêm D-55..D-58 từ M5 (user management, Web Audio beep, export Blob, self-demote block).
+- 2026-08-30: Bump lên v1.6.0 — thêm D-59..D-60 từ M6 (LWT timestamp replace, source_changed broadcast via BackgroundTasks).

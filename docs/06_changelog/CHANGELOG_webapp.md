@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 0.6.0
+version: 0.7.0
 ---
 
 # Webapp Changelog
@@ -14,6 +14,17 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 Định dạng theo [keep-a-changelog](https://keepachangelog.com/vi-VN/1.1.0/).
 
 ## [Unreleased]
+
+## [0.7.0] - 2026-08-30
+
+### Added
+- M6: Test Report (`docs/05_test/test_report_m6.md`) — 7 test cases (E2E, switch, LWT, negative, source_changed WS, session refresh, performance).
+- M6: Real integration verified end-to-end với master "thật" (Python publish từ container backend) + simulator (3 SIM devices).
+
+### Fixed
+- **InfluxDB LWT timestamp bug**: consumer dùng `payload["ts"]` gốc (=0 cho LWT), points rơi vào epoch 1970. Fix: replace `ts<=0` bằng `_now()` trước khi ghi Influx.
+- **source_changed WS broadcast**: helper ban đầu dùng `asyncio.get_event_loop()` trong sync route, drop silently. Fix: dùng FastAPI `BackgroundTasks` + async function chạy trên main event loop.
+- M6: New DECISIONS D-59..D-60 (xem DECISIONS.md).
 
 ## [0.6.0] - 2026-08-30
 
@@ -179,6 +190,7 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 - N/A (chưa có code ở M0).
 
 [Unreleased]: #
+[0.7.0]: #
 [0.6.0]: #
 [0.5.0]: #
 [0.4.0]: #
