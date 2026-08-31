@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 0.5.0
+version: 0.6.0
 ---
 
 # Webapp Changelog
@@ -14,6 +14,30 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 Định dạng theo [keep-a-changelog](https://keepachangelog.com/vi-VN/1.1.0/).
 
 ## [Unreleased]
+
+## [0.6.0] - 2026-08-30
+
+### Added
+- M5: Backend user management — 5 endpoints:
+  - GET `/api/admin/users` (list)
+  - POST `/api/admin/users` (create, role admin/viewer, password >=8 chars)
+  - PATCH `/api/admin/users/{username}/role`
+  - PATCH `/api/admin/users/{username}/password`
+  - DELETE `/api/admin/users/{username}` (cannot self-delete/demote)
+  - All audited (admin.users.* actions)
+- M5: 7 new tests in `test_api.py` covering create/role/password/delete edge cases (25/25 total pass).
+- M5: Webapp `useSound` Zustand store (`webapp/src/store/index.ts`) — persisted to localStorage, default OFF (D-07).
+- M5: `playCriticalBeep()` Web Audio API — 2-tone 880/660Hz, 250ms total. Plays on first mount of a critical toast when sound enabled.
+- M5: Sound toggle button in TopBar (🔊/🔇).
+- M5: Toast "Clear all (N)" button when stack > 1.
+- M5: Settings page extended với 4 panels:
+  - Simulator Service (Start/Stop)
+  - Source Mapping (CRUD)
+  - User Management (create, change role via dropdown, set password, delete)
+  - Export (telemetry/events/diag, CSV/XLSX, download via Blob)
+- M5: `exportsApi.download()` trả Blob, trigger download trong browser.
+- M5: Events page — device_id filter (dropdown từ danh sách devices).
+- M5: New DECISIONS D-55..D-58 (xem DECISIONS.md).
 
 ## [0.5.0] - 2026-08-30
 
@@ -155,6 +179,7 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 - N/A (chưa có code ở M0).
 
 [Unreleased]: #
+[0.6.0]: #
 [0.5.0]: #
 [0.4.0]: #
 [0.3.0]: #

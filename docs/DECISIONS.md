@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.4.0
+version: 1.5.0
 ---
 
 # Architecture Decisions
@@ -331,6 +331,26 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - **Lý do:** Ecosystem lớn, dễ tuyển người; build nhanh; TanStack Query xử lý cache/refetch tốt; Zustand nhẹ, persisted to localStorage cho auth/theme.
 - **Hệ quả:** SPA nhẹ (~250 KB JS unzipped), code splitting lazy-load pages, source maps cho debug.
 
+## D-55 — User management via admin API (M5)
+- **Quyết định:** Admin endpoints `/api/admin/users` cho CRUD + role + password. Self-demote/self-delete bị block. Password >=8 chars enforced.
+- **Lý do:** Production cần tách admin/viewer (D-23), audit trail (D-32). Bootstrap admin vẫn từ env (D-33); sau đó admin tạo users qua API.
+- **Hệ quả:** 5 endpoints + 7 test cases (25/25 pass). `users` table đã có sẵn từ M1.
+
+## D-56 — Critical sound via Web Audio API (M5)
+- **Quyết định:** Không load file mp3; dùng `AudioContext.createOscillator` generate 2-tone beep (880→660Hz, 250ms). Toggle persist localStorage, default OFF.
+- **Lý do:** Load file audio cần hosting, CORS, payload. Web Audio API 0-byte payload, cross-browser (Chrome/Firefox/Safari/Edge), pure client-side. User phải click 1 lần trước (browser autoplay policy) → sau đó OK.
+- **Hệ quả:** `useSound` store + `playCriticalBeep()`. Chỉ play khi critical toast mount lần đầu (không re-play khi update count).
+
+## D-57 — Export pattern: download Blob (M5)
+- **Quyết định:** `exportsApi.download()` trả `Blob`, frontend tạo ObjectURL + click `<a download>`. CSV mặc định, XLSX tuỳ chọn.
+- **Lý do:** Tránh navigate away từ SPA. Browser handle file name qua `download` attribute. Blob cleanup sau khi click.
+- **Hệ quả:** Không cần streaming response ở backend (đã có từ M1 với pandas).
+
+## D-58 — Admin can self-demote block (M5)
+- **Quyết định:** Admin không thể demote/delete chính mình. 400 error.
+- **Lý do:** Tránh trường hợp admin cuối cùng vô tình lock out hệ thống. Production nên có 2+ admin.
+- **Hệ quả:** `change_user_role` và `delete_user` đều check `u.username == admin.username` trước khi apply.
+
 ## D-51 — Chart library: uPlot (M4)
 - **Quyết định:** Sử dụng **uPlot** 1.6.31 cho time-series chart.
 - **Lý do:** Benchmark cho thấy uPlot nhanh hơn Chart.js/ECharts cho time-series hàng chục nghìn điểm với FPS cao. Bundle nhỏ (~50KB gzipped). API đơn giản.
@@ -437,3 +457,4 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - 2026-08-30: Bump lên v1.2.0 — thêm D-47, D-48, D-49 từ M2 (frontend stack React+TanStack+Zustand, ReconnectingWs class, nginx proxy).
 - 2026-08-30: Bump lên v1.3.0 — thêm D-50 từ M3 (toast UX: group, auto-dismiss, ARIA, wire vào Overview).
 - 2026-08-30: Bump lên v1.4.0 — thêm D-51..D-54 từ M4 (uPlot time-series, ECharts gauge, time range quick ranges, events filter pattern).
+- 2026-08-30: Bump lên v1.5.0 — thêm D-55..D-58 từ M5 (user management, Web Audio beep, export Blob, self-demote block).
