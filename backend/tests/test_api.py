@@ -197,3 +197,121 @@ def test_infer_pattern_real():
 def test_infer_pattern_unknown_defaults_to_real():
     from app.services.device_sources import infer_from_pattern
     assert infer_from_pattern("UNKNOWN_X") == "real"
+
+
+# ====== M5: User management ======
+def test_admin_list_users(client):
+    client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    csrf = client.cookies.get("csrf")
+    r = client.get("/api/admin/users")
+    assert r.status_code == 200
+    body = r.json()
+    assert any(u["username"] == "admin" and u["role"] == "admin" for u in body)
+
+
+def test_admin_create_user(client):
+    client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    csrf = client.cookies.get("csrf")
+    r = client.post(
+        "/api/admin/users",
+        json={"username": "v1", "password": "viewerpass1", "role": "viewer"},
+        headers={"X-CSRF-Token": csrf or ""},
+    )
+    assert r.status_code == 201
+    assert r.json()["username"] == "v1"
+    assert r.json()["role"] == "viewer"
+
+
+def test_admin_create_user_short_password(client):
+    client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    csrf = client.cookies.get("csrf")
+    r = client.post(
+        "/api/admin/users",
+        json={"username": "v2", "password": "short", "role": "viewer"},
+        headers={"X-CSRF-Token": csrf or ""},
+    )
+    assert r.status_code == 400
+
+
+def test_admin_create_user_duplicate(client):
+    client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    csrf = client.cookies.get("csrf")
+    body = {"username": "v3", "password": "viewerpass1", "role": "viewer"}
+    client.post(
+        "/api/admin/users", json=body, headers={"X-CSRF-Token": csrf or ""}
+    )
+    r = client.post(
+        "/api/admin/users", json=body, headers={"X-CSRF-Token": csrf or ""}
+    )
+    assert r.status_code == 409
+
+
+def test_admin_change_role_and_password_and_delete(client):
+    client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+
+    def csrf_header():
+        return {"X-CSRF-Token": client.cookies.get("csrf") or ""}
+
+    # create
+    r = client.post(
+        "/api/admin/users",
+        json={"username": "v4", "password": "viewerpass1", "role": "viewer"},
+        headers=csrf_header(),
+    )
+    assert r.status_code == 201
+    # change role
+    r = client.patch(
+        "/api/admin/users/v4/role", json={"role": "admin"}, headers=csrf_header()
+    )
+    assert r.status_code == 200
+    assert r.json()["role"] == "admin"
+    # change password
+    r = client.patch(
+        "/api/admin/users/v4/password",
+        json={"password": "newpass123"},
+        headers=csrf_header(),
+    )
+    assert r.status_code == 204
+    # login as admin again (CSRF cookie is rotated by every login)
+    client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    # delete
+    r = client.delete("/api/admin/users/v4", headers=csrf_header())
+    assert r.status_code == 204
+    # login as v4 should now fail
+    r = client.post(
+        "/api/auth/login", json={"username": "v4", "password": "newpass123"}
+    )
+    assert r.status_code == 401
+
+
+def test_admin_cannot_demote_self(client):
+    client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    csrf = client.cookies.get("csrf")
+    r = client.patch(
+        "/api/admin/users/admin/role",
+        json={"role": "viewer"},
+        headers={"X-CSRF-Token": csrf or ""},
+    )
+    assert r.status_code == 400
+
+
+def test_admin_cannot_delete_self(client):
+    client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    csrf = client.cookies.get("csrf")
+    r = client.delete(
+        "/api/admin/users/admin", headers={"X-CSRF-Token": csrf or ""}
+    )
+    assert r.status_code == 400
+
+
+def test_export_telemetry_csv(client):
+    """M5: export endpoint returns CSV (uses Postgres for diag, Influx for telemetry; empty here OK)."""
+    client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    now = 1_700_000_000
+    r = client.get(
+        f"/api/exports/telemetry"
+        f"?device_id=GW_X&register=hr_100&from={now-3600}&to={now}&format=csv"
+    )
+    assert r.status_code == 200
+    # CSV body — first line is header
+    assert r.headers["content-type"].startswith("text/csv")

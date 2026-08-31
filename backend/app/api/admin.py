@@ -1,21 +1,157 @@
-"""Admin endpoints: source mapping CRUD, simulator control."""
+"""Admin endpoints: source mapping CRUD, simulator control, user management (M5)."""
 from __future__ import annotations
 
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentUser, require_admin
+from app.core.security import hash_password
 from app.db.session import get_db
+from app.models import User as UserModel
 from app.schemas.common import (
     DeviceSourceIn,
     DeviceSourceOut,
     SimulatorStatus,
+    UserOut,
 )
 from app.services import audit, device_sources
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+# ====== User management (M5) ======
+class UserCreateIn(BaseModel):
+    username: str
+    password: str
+    role: str
+
+
+class UserRoleIn(BaseModel):
+    role: str
+
+
+class UserPasswordIn(BaseModel):
+    password: str
+
+
+@router.get("/users", response_model=list[UserOut])
+def list_users(
+    db: Session = Depends(get_db),
+    _: CurrentUser = Depends(require_admin),
+):
+    return db.query(UserModel).order_by(UserModel.username).all()
+
+
+@router.post("/users", response_model=UserOut, status_code=201)
+def create_user(
+    body: UserCreateIn,
+    db: Session = Depends(get_db),
+    admin: CurrentUser = Depends(require_admin),
+):
+    if body.role not in ("admin", "viewer"):
+        raise HTTPException(status_code=400, detail="invalid role")
+    if len(body.password) < 8:
+        raise HTTPException(status_code=400, detail="password too short (>=8)")
+    if db.get(UserModel, body.username):
+        raise HTTPException(status_code=409, detail="user already exists")
+    u = UserModel(
+        username=body.username,
+        password_hash=hash_password(body.password),
+        role=body.role,
+    )
+    db.add(u)
+    audit.write(
+        db,
+        action="admin.users.create",
+        user_name=admin.username,
+        target=body.username,
+        detail={"role": body.role},
+    )
+    db.commit()
+    db.refresh(u)
+    return u
+
+
+@router.patch("/users/{username}/role", response_model=UserOut)
+def change_user_role(
+    username: str,
+    body: UserRoleIn,
+    db: Session = Depends(get_db),
+    admin: CurrentUser = Depends(require_admin),
+):
+    if body.role not in ("admin", "viewer"):
+        raise HTTPException(status_code=400, detail="invalid role")
+    u = db.get(UserModel, username)
+    if not u:
+        raise HTTPException(status_code=404, detail="user not found")
+    if u.username == admin.username and body.role != "admin":
+        raise HTTPException(
+            status_code=400,
+            detail="cannot demote the currently authenticated admin",
+        )
+    u.role = body.role
+    audit.write(
+        db,
+        action="admin.users.role",
+        user_name=admin.username,
+        target=username,
+        detail={"role": body.role},
+    )
+    db.commit()
+    db.refresh(u)
+    return u
+
+
+@router.patch(
+    "/users/{username}/password", status_code=204, response_class=Response
+)
+def change_user_password(
+    username: str,
+    body: UserPasswordIn,
+    db: Session = Depends(get_db),
+    admin: CurrentUser = Depends(require_admin),
+):
+    if len(body.password) < 8:
+        raise HTTPException(status_code=400, detail="password too short (>=8)")
+    u = db.get(UserModel, username)
+    if not u:
+        raise HTTPException(status_code=404, detail="user not found")
+    u.password_hash = hash_password(body.password)
+    audit.write(
+        db,
+        action="admin.users.password",
+        user_name=admin.username,
+        target=username,
+    )
+    db.commit()
+    return Response(status_code=204)
+
+
+@router.delete("/users/{username}", status_code=204, response_class=Response)
+def delete_user(
+    username: str,
+    db: Session = Depends(get_db),
+    admin: CurrentUser = Depends(require_admin),
+):
+    if username == admin.username:
+        raise HTTPException(
+            status_code=400, detail="cannot delete the currently authenticated user"
+        )
+    u = db.get(UserModel, username)
+    if not u:
+        raise HTTPException(status_code=404, detail="user not found")
+    db.delete(u)
+    audit.write(
+        db,
+        action="admin.users.delete",
+        user_name=admin.username,
+        target=username,
+    )
+    db.commit()
+    return Response(status_code=204)
 
 
 # ====== Device source mapping ======
@@ -133,3 +269,4 @@ def sim_stop(
     _sim_state["proc"] = None
     _sim_state["device_ids"] = []
     return SimulatorStatus(running=False, device_ids=[])
+
