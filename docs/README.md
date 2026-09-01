@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.8.0
+version: 1.9.0
 ---
 
 # Documentation Index
@@ -45,7 +45,11 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 
 - [Test Report M6](./05_test/test_report_m6.md) — 7 test cases (E2E, switch, LWT, negative, source_changed WS, session refresh, performance), 25/25 unit tests pass.
 - [Test Report M7](./05_test/test_report_m7.md) — final wrap-up: bundle 740KB JS, smoke 1h stable, 25/25 tests, known limitations.
+- [Test Report M6](./05_test/test_report_m6.md) — 7 test cases (E2E, switch, LWT, negative, source_changed WS, session refresh, performance), 25/25 unit tests pass.
+- [Test Report M7](./05_test/test_report_m7.md) — final wrap-up: bundle 740KB JS, smoke 1h stable, 25/25 tests, known limitations.
 - [Test Report M9](./05_test/test_report_m9.md) — multi-instance via Redis pub/sub, cross-instance WS, rate limit shared.
+- [Test Checklist](./05_test/test_checklist.md) — 70+ tiêu chí manual test cho user/QA.
+- [Test Acceptance Criteria](./05_test/test_acceptance_criteria.md) — 50+ AC tổng hợp M0-M9, decision matrix cho release gate.
 
 ## 7. Lịch sử thay đổi (`06_changelog/`)
 
@@ -64,6 +68,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 - 2026-08-30: Bump lên v1.6.0 — D-61..D-62 (M7 project complete, bundle budget).
 - 2026-08-30: Bump lên v1.7.0 — D-63..D-65 (M9 multi-instance via Redis pub/sub).
 - 2026-09-01: Bump lên v1.8.0 — link Release v0.9.0 (M0-M9 complete).
+- 2026-09-01: Bump lên v1.9.0 — link test_checklist + test_acceptance_criteria + scripts/quick_smoke.sh.
 - 2026-08-30: Bump lên v1.5.0 — D-59..D-60 (M6 LWT fix, source_changed WS broadcast).
 - 2026-08-30: Bump lên v1.4.0 — D-55..D-58 (M5 user management, sound, export, self-demote).
 - 2026-08-30: Bump lên v1.3.0 — D-51..D-54 (M4 chart, gauge, time range, event filter).
