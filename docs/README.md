@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.10.0
+version: 1.11.0
 ---
 
 # Documentation Index
@@ -51,6 +51,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 - [Test Checklist](./05_test/test_checklist.md) — 70+ tiêu chí manual test cho user/QA.
 - [Test Acceptance Criteria](./05_test/test_acceptance_criteria.md) — 50+ AC tổng hợp M0-M9, decision matrix cho release gate.
 - [Operation Flow Report](./05_test/operation_flow.md) — luồng hoạt động end-to-end (master → Modbus → MQTT → backend → webapp), 5 bước happy path + 5 failure modes.
+- [How to Run the Project](./05_test/how_to_run.md) — hướng dẫn chạy A-Z: yêu cầu, chuẩn bị, 5 lệnh Makefile, troubleshooting, quick reference.
 
 ## 7. Lịch sử thay đổi (`06_changelog/`)
 
@@ -71,6 +72,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 - 2026-09-01: Bump lên v1.8.0 — link Release v0.9.0 (M0-M9 complete).
 - 2026-09-01: Bump lên v1.9.0 — link test_checklist + test_acceptance_criteria + scripts/quick_smoke.sh.
 - 2026-09-01: Bump lên v1.10.0 — link operation_flow.md (end-to-end flow report).
+- 2026-09-01: Bump lên v1.11.0 — link how_to_run.md (A-Z guide).
 - 2026-08-30: Bump lên v1.5.0 — D-59..D-60 (M6 LWT fix, source_changed WS broadcast).
 - 2026-08-30: Bump lên v1.4.0 — D-55..D-58 (M5 user management, sound, export, self-demote).
 - 2026-08-30: Bump lên v1.3.0 — D-51..D-54 (M4 chart, gauge, time range, event filter).
