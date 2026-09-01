@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.7.0
+version: 1.8.0
 ---
 
 # Documentation Index
@@ -49,6 +49,9 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 
 ## 7. Lịch sử thay đổi (`06_changelog/`)
 
+- [Release v0.9.0](./06_changelog/RELEASE_v0.9.0.md) — project complete (M0–M9) summary.
+- [CHANGELOG_webapp](./06_changelog/CHANGELOG_webapp.md) — lịch sử thay đổi webapp (theo keep-a-changelog).
+
 - [CHANGELOG_webapp](./06_changelog/CHANGELOG_webapp.md) — lịch sử thay đổi webapp (theo keep-a-changelog).
 
 ## 8. Tài liệu tham khảo (`99_attachments/`)
@@ -60,6 +63,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 - 2026-08-30: Tạo mục lục dự án (M0).
 - 2026-08-30: Bump lên v1.6.0 — D-61..D-62 (M7 project complete, bundle budget).
 - 2026-08-30: Bump lên v1.7.0 — D-63..D-65 (M9 multi-instance via Redis pub/sub).
+- 2026-09-01: Bump lên v1.8.0 — link Release v0.9.0 (M0-M9 complete).
 - 2026-08-30: Bump lên v1.5.0 — D-59..D-60 (M6 LWT fix, source_changed WS broadcast).
 - 2026-08-30: Bump lên v1.4.0 — D-55..D-58 (M5 user management, sound, export, self-demote).
 - 2026-08-30: Bump lên v1.3.0 — D-51..D-54 (M4 chart, gauge, time range, event filter).

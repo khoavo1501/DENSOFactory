@@ -161,6 +161,7 @@ Tất cả tài liệu nằm trong `docs/`. Bắt đầu từ **[docs/README.md]
 - **M6** (DONE): Real integration + 2 bug fixes (LWT + source_changed)
 - **M7** (DONE): Polish + Lighthouse + 1h stability + deploy runbook
 - **M9** (DONE): Multi-instance backend via Redis pub/sub (WS broadcast, rate limit shared)
+- **v0.9.0** (RELEASED 2026-09-01): see [RELEASE_v0.9.0.md](docs/06_changelog/RELEASE_v0.9.0.md) for full summary
 
 ## Giấy phép
 
