@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     MQTT_BROKER_HOST: str = Field(default="emqx")
     MQTT_BROKER_PORT: int = Field(default=1883)
 
+    # ====== Multi-instance (M9) ======
+    REDIS_URL: str = Field(default="")  # empty => single-instance mode
+    INSTANCE_ID: str = Field(default="backend-1")  # unique per pod
+
     # ====== Optional with defaults ======
     DIAG_RETENTION_DAYS: int = Field(default=90, ge=1)
     AUDIT_RETENTION_DAYS: int = Field(default=365, ge=1)

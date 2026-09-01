@@ -24,7 +24,7 @@ from app.core.jwt import (
     create_refresh_token,
     decode_token,
 )
-from app.core.rate_limit import check_login, check_refresh
+from app.core.rate_limit import check_login_async, check_refresh_async
 from app.core.security import verify_password
 from app.db.session import get_db
 from app.models import RevokedRefresh, User
@@ -58,14 +58,14 @@ def _set_auth_cookies(response: Response, access: str, refresh: str) -> None:
 
 
 @router.post("/login", response_model=UserOut)
-def login(
+async def login(
     body: LoginRequest,
     request: Request,
     response: Response,
     db: Session = Depends(get_db),
 ) -> UserOut:
     client_ip = request.client.host if request.client else "unknown"
-    if not check_login(client_ip):
+    if not await check_login_async(client_ip):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="too many login attempts; try again later",
@@ -92,14 +92,14 @@ def login(
 
 
 @router.post("/refresh", response_model=UserOut)
-def refresh(
+async def refresh(
     request: Request,
     response: Response,
     rt: str | None = Cookie(default=None, alias=COOKIE_REFRESH),
     db: Session = Depends(get_db),
 ) -> UserOut:
     client_ip = request.client.host if request.client else "unknown"
-    if not check_refresh(client_ip):
+    if not await check_refresh_async(client_ip):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="too many refresh attempts; try again later",

@@ -20,7 +20,7 @@ from app.db.session import SessionLocal
 from app.mqtt.consumer import get_consumer
 from app.services import cleanup
 from app.services.bootstrap import ensure_admin
-from app.ws.hub import router as ws_router
+from app.ws.hub import router as ws_router, start_bus, stop_bus
 
 
 _log = logging.getLogger(__name__)
@@ -70,9 +70,12 @@ async def lifespan(app: FastAPI):
     if os.environ.get("APP_ENV") != "test":
         await consumer.start()
         _log.info("mqtt consumer started")
+    # Start Redis pub/sub bus (no-op if REDIS_URL is empty)
+    await start_bus()
     try:
         yield
     finally:
+        await stop_bus()
         if os.environ.get("APP_ENV") != "test":
             await consumer.stop()
         sched.shutdown(wait=False)

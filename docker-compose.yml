@@ -51,6 +51,17 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   backend:
     build:
       context: ./backend
@@ -65,6 +76,8 @@ services:
       INFLUXDB_BUCKET: telemetry
       MQTT_BROKER_HOST: emqx
       MQTT_BROKER_PORT: "1883"
+      REDIS_URL: redis://redis:6379/0
+      INSTANCE_ID: backend-1
       CORS_ORIGINS: http://localhost:5173,http://localhost:3000
       COOKIE_SECURE: "false"
       EXPORT_MAX_ROWS: "100000"
@@ -73,11 +86,46 @@ services:
         condition: service_healthy
       influxdb:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "8000:8000"
     volumes:
       - ./docs:/app/docs:ro
       - ./backend/master_protocol_v1.json:/app/master_protocol_v1.json:ro
+
+  backend2:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://iigw:iigw@postgres:5432/iigw
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: iigw-dev-token
+      INFLUXDB_ORG: iigw
+      INFLUXDB_BUCKET: telemetry
+      MQTT_BROKER_HOST: emqx
+      MQTT_BROKER_PORT: "1883"
+      REDIS_URL: redis://redis:6379/0
+      INSTANCE_ID: backend-2
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
+      COOKIE_SECURE: "false"
+      EXPORT_MAX_ROWS: "100000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./docs:/app/docs:ro
+      - ./backend/master_protocol_v1.json:/app/master_protocol_v1.json:ro
+    profiles: ["multi-instance"]
 
   webapp:
     build:
@@ -106,3 +154,4 @@ services:
 volumes:
   pgdata:
   influxdata:
+  redisdata:
