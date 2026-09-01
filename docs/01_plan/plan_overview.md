@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Plan Overview
@@ -72,6 +72,7 @@ Backend/hạ tầng dữ liệu đã có:
 | **M5** | Event/Alarm + Settings + Export | Trang `/events` với filter; ToastStack + ack; trang `/settings` 3 panel; export buttons | Filter critical-only đúng; Start/Stop simulator phản ánh trong vài giây; CSV mở được bằng Excel |
 | **M6** | Tích hợp Real + switch | E2E master thật; song song 5 sim + 10 real; test LWT, mapping đổi runtime, source_changed WS; `docs/04_runbook/runbook_deploy.md` | Checklist case đạt 100% |
 | **M7** | Test & Polish | Chạy TC-S*, TC-SW*, TC-P*; Lighthouse desktop ≥ 90; `docs/05_test/test_report_phase*.md`; `docs/06_changelog/CHANGELOG_webapp.md` đến v0.x | Mọi DoD đạt; demo ổn định 1h liên tục với 15 device |
+| **M9** | Multi-instance backend (Redis pub/sub) | Redis service; `RedisBus`; rate limit qua Redis ZSET; profile `multi-instance` với `backend2`; cross-instance WS broadcast | backend1 publish → backend2 nhận qua Redis; rate limit shared; 25/25 tests vẫn pass |
 
 ## 6. Future Work
 
@@ -93,3 +94,4 @@ Backend/hạ tầng dữ liệu đã có:
 
 - 2026-08-30: Tạo plan_overview.md (M0).
 - 2026-08-30: Bump lên v1.0.0 — đánh dấu toàn bộ M0–M7 hoàn tất; liệt kê deliverables, known limitations ở `docs/05_test/test_report_m7.md`.
+- 2026-09-01: Bump lên v1.1.0 — thêm M9 (multi-instance Redis pub/sub).

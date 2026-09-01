@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.7.0
+version: 1.8.0
 ---
 
 # Architecture Decisions
@@ -351,6 +351,21 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - **Lý do:** Demo chạy ổn định 1h với 15 device, 0 crashes. Production-ready với known limitations (WS hub in-memory, rate-limit in-memory) chấp nhận cho POC.
 - **Hệ quả:** Phase tiếp theo có thể là: SSO, multi-instance backend với Redis, email alerting, ack events UI, signed export URL.
 
+## D-63 — Redis pub/sub cho WS broadcast (M9)
+- **Quyết định:** Channel `iigw:ws` shared giữa N backend instances. Mỗi instance subscribe, dispatch về local in-memory hub; publish envelope chứa `origin` để skip own message.
+- **Lý do:** Tránh loop (instance A publish → A lại nhận), đơn giản hơn Redis Streams. Auto-fallback nếu Redis down (instance chạy in-memory, không crash).
+- **Hệ quả:** WebSocket broadcast đồng bộ giữa instances. Multi-instance scale horizontal OK. Vẫn cần load balancer sticky session (WS) vì instance biết WS của mình.
+
+## D-64 — Redis ZSET cho rate limit (M9)
+- **Quyết định:** Sliding window count bằng `ZADD` + `ZREMRANGEBYSCORE` + `ZCARD` trong Redis pipeline. Auto-fallback in-memory nếu Redis down.
+- **Lý do:** Atomic across instances. O(log N) per request. Sliding window precise (không fixed bucket).
+- **Hệ quả:** 5 attempts/min cho login được count globally. Multi-instance backend cùng 1 IP chỉ có 5 lần thử tổng.
+
+## D-65 — Multi-instance profile docker-compose (M9)
+- **Quyết định:** `backend2` service chỉ start khi `docker compose --profile multi-instance up -d`. Cùng image, cùng config, port 8001, INSTANCE_ID=backend-2.
+- **Lý do:** Dev chỉ cần 1 instance; multi-instance chỉ bật khi test WS broadcast. Production sẽ scale qua container orchestrator (k8s/Swarm) thay vì compose profile.
+- **Hệ quả:** Test M9 cross-instance có thể reproduce local. Production deploy tương tự nhưng qua orchestrator.
+
 ## D-55 — User management via admin API (M5)
 - **Quyết định:** Admin endpoints `/api/admin/users` cho CRUD + role + password. Self-demote/self-delete bị block. Password >=8 chars enforced.
 - **Lý do:** Production cần tách admin/viewer (D-23), audit trail (D-32). Bootstrap admin vẫn từ env (D-33); sau đó admin tạo users qua API.
@@ -480,3 +495,4 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - 2026-08-30: Bump lên v1.5.0 — thêm D-55..D-58 từ M5 (user management, Web Audio beep, export Blob, self-demote block).
 - 2026-08-30: Bump lên v1.6.0 — thêm D-59..D-60 từ M6 (LWT timestamp replace, source_changed broadcast via BackgroundTasks).
 - 2026-08-30: Bump lên v1.7.0 — thêm D-61..D-62 từ M7 (bundle size budget, project complete M0–M7).
+- 2026-08-30: Bump lên v1.8.0 — thêm D-63..D-65 từ M9 (Redis pub/sub, ZSET rate limit, multi-instance profile).

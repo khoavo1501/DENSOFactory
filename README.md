@@ -159,7 +159,8 @@ Tất cả tài liệu nằm trong `docs/`. Bắt đầu từ **[docs/README.md]
 - **M4** (DONE): Device detail (5 tabs + uPlot chart + ECharts gauge)
 - **M5** (DONE): Events/Export + sound + user management
 - **M6** (DONE): Real integration + 2 bug fixes (LWT + source_changed)
-- **M7** (in progress): Polish + Lighthouse + 1h stability + deploy runbook
+- **M7** (DONE): Polish + Lighthouse + 1h stability + deploy runbook
+- **M9** (DONE): Multi-instance backend via Redis pub/sub (WS broadcast, rate limit shared)
 
 ## Giấy phép
 

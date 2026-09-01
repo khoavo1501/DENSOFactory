@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 0.8.0
+version: 0.9.0
 ---
 
 # Webapp Changelog
@@ -14,6 +14,23 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 Định dạng theo [keep-a-changelog](https://keepachangelog.com/vi-VN/1.1.0/).
 
 ## [Unreleased]
+
+## [0.9.0] - 2026-09-01
+
+### Added
+- M9: Multi-instance backend qua Redis pub/sub (D-19 future done).
+- M9: `app/ws/redis_bus.py` — RedisBus class (connect/publish/subscribe, skip-origin, auto-fallback).
+- M9: `Hub.publish` mirror sang bus; `dispatch_from_bus` cho incoming messages.
+- M9: `start_bus/stop_bus` helpers trong lifespan (idempotent).
+- M9: Rate limit shared qua Redis ZSET (D-44 future done) với fallback in-memory.
+- M9: docker-compose: `redis` service; `backend2` trong profile `multi-instance` (port 8001).
+- M9: New DECISIONS D-63..D-65 (xem DECISIONS.md).
+- M9: Test Report M9 (`docs/05_test/test_report_m9.md`) — 3 test cases pass, 25/25 unit.
+
+### Changed
+- M9: `login`/`refresh` thành async routes, dùng `check_*_async`.
+- M9: `requirements.txt`: `redis[hiredis]==5.0.8`.
+- M9: `config.py`: thêm `REDIS_URL`, `INSTANCE_ID`.
 
 ## [0.8.0] - 2026-08-30
 
@@ -199,6 +216,7 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 - N/A (chưa có code ở M0).
 
 [Unreleased]: #
+[0.9.0]: #
 [0.8.0]: #
 [0.7.0]: #
 [0.6.0]: #
