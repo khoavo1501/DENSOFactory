@@ -133,3 +133,50 @@ function getCookie(name: string): string | null {
   );
   return m ? decodeURIComponent(m[1]) : null;
 }
+
+// ====== M10: Gateway & PLC API ======
+import type { Gateway, PLC, PLCSnapshot, PLCAssignment, Warning, GatewayWithPLCs } from "@/types";
+
+export const gatewaysApi = {
+  list: () => api<Gateway[]>(`/gateways`),
+  get: (masterId: string) => api<GatewayWithPLCs>(`/gateways/${encodeURIComponent(masterId)}`),
+  remove: (masterId: string) =>
+    api<void>(`/gateways/${encodeURIComponent(masterId)}`, { method: "DELETE" }),
+};
+
+export const plcsApi = {
+  list: (gatewayId?: string) =>
+    api<PLC[]>(`/plcs${gatewayId ? `?gateway_id=${encodeURIComponent(gatewayId)}` : ""}`),
+  get: (plcId: string) => api<PLC>(`/plcs/${encodeURIComponent(plcId)}`),
+  /**
+   * Snapshot endpoint. mode=normal returns latest 1-min snapshot.
+   * mode=realtime forces a live read (used when warning active).
+   */
+  snapshot: (plcId: string, mode: "normal" | "realtime" = "normal") =>
+    api<PLCSnapshot>(
+      `/plcs/${encodeURIComponent(plcId)}/snapshot?mode=${mode}`
+    ),
+};
+
+export const unpairedApi = {
+  list: () => api<PLC[]>(`/unpaired`),
+  pair: (plcId: string, gatewayId: string) =>
+    api<PLCAssignment>(`/unpaired/${encodeURIComponent(plcId)}/pair`, {
+      method: "POST",
+      body: { gateway_id: gatewayId },
+    }),
+  unpair: (plcId: string) =>
+    api<void>(`/unpaired/${encodeURIComponent(plcId)}/pair`, {
+      method: "DELETE",
+    }),
+};
+
+export const warningsApi = {
+  list: (params?: { target_type?: "plc" | "gateway"; since?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.target_type) qs.set("target_type", params.target_type);
+    if (params?.since) qs.set("since", String(params.since));
+    const q = qs.toString();
+    return api<Warning[]>(`/warnings${q ? `?${q}` : ""}`);
+  },
+};

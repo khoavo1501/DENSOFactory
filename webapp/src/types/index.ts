@@ -79,8 +79,80 @@ export interface DeviceSource {
 }
 
 export interface WsMessage {
-  type: "telemetry" | "status" | "event" | "diag";
-  device_id: string;
+  type: "telemetry" | "status" | "event" | "diag" | "plc_update" | "source_changed";
+  device_id?: string;
   ts: number;
+  // M10 plc_update fields
+  master_id?: string;
+  plc_id?: string;
+  category?: string;
+  payload?: Record<string, unknown>;
   [key: string]: unknown;
+}
+
+// ====== M10: Gateway & PLC types ======
+export type GatewayStatus = "online" | "offline" | "error";
+export type PLCStatus = "online" | "offline" | "error";
+export type OperatingStatus = "running" | "stopped";
+export type WarningSeverity = "info" | "warning" | "critical";
+export type TargetType = "plc" | "gateway";
+export type SnapshotMode = "normal" | "realtime";
+
+export interface Gateway {
+  master_id: string;
+  name: string;
+  status: GatewayStatus;
+  fw_version?: string;
+  ip?: string;
+  last_seen_ts?: number;
+}
+
+export interface PLC {
+  plc_id: string;
+  master_id: string;
+  name?: string;
+  operating_status: OperatingStatus;
+  status: PLCStatus;
+  last_seen_ts?: number;
+  // resolved at query time from latest snapshot + warning state
+  latest_snapshot?: PLCSnapshot | null;
+  has_warning?: boolean;
+  highest_severity?: WarningSeverity;
+}
+
+export interface PLCSnapshot {
+  id?: number;
+  plc_id: string;
+  master_id: string;
+  ts: number;
+  temperature?: number;
+  rpm?: number;
+  current_amp?: number;
+  heartbeat?: number;
+  operating_status?: OperatingStatus;
+  status?: PLCStatus;
+  mode?: SnapshotMode;
+}
+
+export interface PLCAssignment {
+  id: number;
+  plc_id: string;
+  gateway_id: string;
+  created_at: string;
+}
+
+export interface Warning {
+  id: number;
+  target_type: TargetType;
+  target_id: string;
+  severity: WarningSeverity;
+  code: string;
+  message?: string;
+  ts: number;
+  cleared: number;
+}
+
+export interface GatewayWithPLCs extends Gateway {
+  plcs: PLC[];
+  has_warning?: boolean;
 }

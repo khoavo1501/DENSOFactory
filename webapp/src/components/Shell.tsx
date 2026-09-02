@@ -85,6 +85,16 @@ export function Shell() {
           <span className="label">Overview</span>
         </NavLink>
         <NavLink
+          to="/gateways"
+          className={({ isActive }) => "item" + (isActive ? " active" : "")}
+          title="Gateways"
+        >
+          <span className="icon" aria-hidden>
+            ▣
+          </span>
+          <span className="label">Gateways</span>
+        </NavLink>
+        <NavLink
           to="/events"
           className={({ isActive }) => "item" + (isActive ? " active" : "")}
           title="Events"

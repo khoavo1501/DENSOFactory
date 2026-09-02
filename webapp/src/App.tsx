@@ -26,6 +26,9 @@ const DiagnosticsPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import("@/pages/SettingsPage").then((m) => ({ default: m.SettingsPage }))
 );
+const GatewaysPage = lazy(() =>
+  import("@/pages/GatewaysPage").then((m) => ({ default: m.GatewaysPage }))
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -24,6 +24,8 @@ from app.mqtt.dispatch import (
     handle_status,
     handle_telemetry,
 )
+from app.services import plc as plc_service
+from app.ws.hub import get_hub as _get_hub
 
 
 _log = logging.getLogger(__name__)
@@ -173,12 +175,14 @@ async def _on_message(
         _log.warning("empty payload on %s; drop", topic)
         return
 
-    # Parse topic: devices/{device_id}/{category}
+    # Parse topic. Two conventions supported:
+    #   - devices/{device_id}/{category}  (M1-M9 legacy)
+    #   - plc-system/{master_id}/{category} (M10 plc-system gateway)
     parts = topic.split("/")
-    if len(parts) != 3 or parts[0] != "devices":
-        _log.warning("topic %r does not match devices/{id}/{cat}; drop", topic)
+    if len(parts) != 3 or parts[0] not in ("devices", "plc-system"):
+        _log.warning("topic %r does not match devices|plc-system/{id}/{cat}; drop", topic)
         return
-    _, topic_device_id, topic_category = parts
+    topic_namespace, topic_device_id, topic_category = parts
 
     # Parse JSON
     try:
@@ -191,14 +195,16 @@ async def _on_message(
         _log.warning("payload not an object on %s; drop", topic)
         return
 
-    # Envelope integrity
-    if payload.get("device_id") != topic_device_id:
-        _log.warning(
-            "device_id mismatch topic=%s payload=%s; drop",
-            topic_device_id,
-            payload.get("device_id"),
-        )
-        return
+    # Envelope integrity: for devices/* the device_id field must match;
+    # for plc-system/* the plc_id field is used (master_id is the namespace).
+    if topic_namespace == "devices":
+        if payload.get("device_id") != topic_device_id:
+            _log.warning(
+                "device_id mismatch topic=%s payload=%s; drop",
+                topic_device_id,
+                payload.get("device_id"),
+            )
+            return
 
     # Validate schema (oneOf picks the right branch)
     validator = loader.get()
@@ -207,7 +213,18 @@ async def _on_message(
         _log.warning("schema validation failed for %s: %s; drop", topic, errors[0].message)
         return
 
-    # Dispatch (DB writes + WS broadcast)
+    # M10: route plc-system messages to plc dispatcher
+    if topic_namespace == "plc-system":
+        db = SessionLocal()
+        try:
+            await _handle_plc_system(db, payload, topic_category, topic_device_id)
+        except Exception as e:
+            _log.exception("plc-system dispatch failed for %s: %s", topic, e)
+        finally:
+            db.close()
+        return
+
+    # Dispatch (DB writes + WS broadcast) for legacy devices/*
     db = SessionLocal()
     try:
         _dispatch(db, topic_category, payload)
@@ -256,9 +273,12 @@ class Consumer:
                     port=self._settings.MQTT_BROKER_PORT,
                     keepalive=60,
                 ) as client:
+                    # M1-M9: legacy device-style topic. M10: plc-system
+                    # gateway topic (new convention).
                     await client.subscribe("devices/+/+")
+                    await client.subscribe("plc-system/+/+")
                     _log.info(
-                        "mqtt consumer connected to %s:%d",
+                        "mqtt consumer connected to %s:%d (subscribed devices/+/+ and plc-system/+/+)",
                         self._settings.MQTT_BROKER_HOST,
                         self._settings.MQTT_BROKER_PORT,
                     )

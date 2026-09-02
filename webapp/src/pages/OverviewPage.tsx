@@ -47,7 +47,7 @@ export function OverviewPage() {
             const [reg, v] = first;
             setLiveValues((prev) => ({
               ...prev,
-              [m.device_id]: `${reg}=${formatValue(v.value)}`,
+              [m.device_id as string]: `${reg}=${formatValue((v as { value: unknown }).value)}`,
             }));
           }
         }
