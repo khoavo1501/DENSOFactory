@@ -5,7 +5,7 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 0.9.0
+version: 1.0.0
 ---
 
 # Webapp Changelog
@@ -14,6 +14,22 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 Định dạng theo [keep-a-changelog](https://keepachangelog.com/vi-VN/1.1.0/).
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-09-03
+
+### Added
+- M10: Gateway & PLC real-time view (PA15_MQTT_W5500 source).
+- Backend: 5 tables (gateways, plcs, plc_snapshots, plc_assignments, warnings) + migration 0002_m10_plc.
+- Backend: MQTT consumer subscribe plc-system/+/+ parallel with devices/+/+.
+- Backend: 8 new API endpoints (gateways/plcs/snapshot/unpaired/warnings).
+- Backend: LWT (state=offline) auto-raises GATEWAY_OFFLINE warning.
+- Frontend: /gateways page with GatewayCard (top) + folder-style PLC list.
+- Frontend: PLCCard with temp/rpm/amp/heartbeat + warning highlight (yellow/red border + pulse animation for running).
+- Frontend: UnpairedSection with Pair button.
+- Frontend: Polling 60s default + auto-realtime when PLC has active warning.
+- Frontend: WS subscribe plc-system realtime update.
+- Test Report M10 (`docs/05_test/test_report_m10.md`) — 6 TC pass end-to-end.
+- New DECISIONS D-66..D-70 (xem DECISIONS.md).
 
 ## [0.9.0] - 2026-09-01
 

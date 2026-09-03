@@ -15,7 +15,7 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 ## 1. Quy tắc chung
 
 - [File Management Standard](./FILE_MANAGEMENT.md) — chuẩn đặt tên, phân loại, vòng đời tài liệu.
-- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho quyết định kiến trúc đã chốt (D-01 → D-65).
+- [Architecture Decisions](./DECISIONS.md) — nguồn chân lý cho quyết định kiến trúc đã chốt (D-01 → D-70).
 
 ## 2. Kế hoạch (`01_plan/`)
 
@@ -45,8 +45,10 @@ Mục lục dẫn vào tất cả tài liệu trong dự án. Mọi tài liệu 
 
 - [Test Report M6](./05_test/test_report_m6.md) — 7 test cases (E2E, switch, LWT, negative, source_changed WS, session refresh, performance), 25/25 unit tests pass.
 - [Test Report M7](./05_test/test_report_m7.md) — final wrap-up: bundle 740KB JS, smoke 1h stable, 25/25 tests, known limitations.
+- [Test Report M10](./05_test/test_report_m10.md) — Gateway & PLC real-time view (M10, PA15 source), 6 TC pass.
 - [Test Report M6](./05_test/test_report_m6.md) — 7 test cases (E2E, switch, LWT, negative, source_changed WS, session refresh, performance), 25/25 unit tests pass.
 - [Test Report M7](./05_test/test_report_m7.md) — final wrap-up: bundle 740KB JS, smoke 1h stable, 25/25 tests, known limitations.
+- [Test Report M10](./05_test/test_report_m10.md) — Gateway & PLC real-time view (M10, PA15 source), 6 TC pass.
 - [Test Report M9](./05_test/test_report_m9.md) — multi-instance via Redis pub/sub, cross-instance WS, rate limit shared.
 - [Test Checklist](./05_test/test_checklist.md) — 70+ tiêu chí manual test cho user/QA.
 - [Test Acceptance Criteria](./05_test/test_acceptance_criteria.md) — 50+ AC tổng hợp M0-M9, decision matrix cho release gate.

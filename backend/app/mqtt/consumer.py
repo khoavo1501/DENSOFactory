@@ -241,6 +241,66 @@ async def _on_message(
             _log.warning("influx write task failed: %s", e)
 
 
+
+
+async def _handle_plc_system(
+    db,
+    payload: dict,
+    category: str,
+    master_id: str,
+) -> None:
+    """Route plc-system/{master_id}/{status|telemetry}.
+
+    Auto-derives plc_id: from payload if present, else
+    {master_id}-PA15 (current firmware has 1 PLC per master).
+    Auto-creates gateway + PLC on first sight.
+    """
+    from datetime import datetime, timezone
+    from app.services import plc as plc_service
+
+    plc_id = payload.get("plc_id") or f"{master_id}-PA15"
+
+    if category == "status":
+        state = payload.get("status", "offline")
+        plc_service.update_gateway_status(db, master_id, state)
+        plc_service.upsert_plc(db, plc_id, master_id)
+        if state == "offline":
+            plc_service.raise_warning(
+                db,
+                target_type="gateway",
+                target_id=master_id,
+                severity="warning",
+                code="GATEWAY_OFFLINE",
+                message=f"Gateway {master_id} offline (LWT or retained)",
+            )
+        plc_service.save_snapshot(db, plc_id, master_id, payload)
+    elif category == "telemetry":
+        plc_service.update_plc_telemetry(db, plc_id, master_id, payload)
+        plc_service.save_snapshot(db, plc_id, master_id, payload)
+    else:
+        _log.info("plc-system: ignore category=%s", category)
+        return
+
+    from app.ws.hub import get_hub as _get_hub
+    hub = _get_hub()
+    msg = {
+        "type": "plc_update",
+        "master_id": master_id,
+        "plc_id": plc_id,
+        "category": category,
+        "payload": payload,
+        "ts": int(datetime.now(tz=timezone.utc).timestamp()),
+    }
+    import asyncio
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(hub.publish(plc_id, msg))
+            loop.create_task(hub.publish(master_id, msg))
+            loop.create_task(hub.publish("*", msg))
+    except RuntimeError:
+        pass
+
 class Consumer:
     def __init__(self) -> None:
         self._settings = get_settings()

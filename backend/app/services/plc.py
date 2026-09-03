@@ -184,39 +184,37 @@ def list_plcs(db: Session, gateway_id: Optional[str] = None) -> list[PLC]:
 
 
 def list_unpaired(db: Session) -> list[dict]:
-    """Return PLCs that have no PLCAssignment row, joined with latest snapshot."""
-    rows = db.execute(
-        select(PLC, PLCSnapshot)
-        .outerjoin(
-            PLCSnapshot,
-            PLCSnapshot.id == (
-                select(PLCSnapshot.id)
-                .where(PLCSnapshot.plc_id == PLC.plc_id)
-                .order_by(PLCSnapshot.ts.desc())
-                .limit(1)
-                .scalar_subquery()
-            ),
-        )
-        .outerjoin(PLCAssignment, PLCAssignment.plc_id == PLC.plc_id)
-        .where(PLCAssignment.id.is_(None))
-    ).all()
-    return [
-        {
-            "plc_id": plc.plc_id,
-            "master_id": plc.master_id,
-            "last_seen_ts": plc.last_seen_ts,
-            "latest_snapshot": {
-                "temperature": snap.temperature if snap else None,
-                "rpm": snap.rpm if snap else None,
-                "current_amp": snap.current_amp if snap else None,
-                "heartbeat": snap.heartbeat if snap else None,
-                "operating_status": snap.operating_status if snap else None,
+    """Return PLCs that have no PLCAssignment row, with latest snapshot.
+
+    Simpler approach: get all PLCs, filter paired ones, attach latest
+    snapshot per PLC. Avoids SQLAlchemy auto-correlation issue.
+    """
+    all_plcs = list(db.execute(select(PLC).order_by(PLC.plc_id)).scalars())
+    paired_ids = set(
+        db.execute(select(PLCAssignment.plc_id)).scalars()
+    )
+    out: list[dict] = []
+    for plc in all_plcs:
+        if plc.plc_id in paired_ids:
+            continue
+        snap = latest_snapshot(db, plc.plc_id)
+        out.append(
+            {
+                "plc_id": plc.plc_id,
+                "master_id": plc.master_id,
+                "last_seen_ts": plc.last_seen_ts,
+                "latest_snapshot": {
+                    "temperature": snap.temperature if snap else None,
+                    "rpm": snap.rpm if snap else None,
+                    "current_amp": snap.current_amp if snap else None,
+                    "heartbeat": snap.heartbeat if snap else None,
+                    "operating_status": snap.operating_status if snap else None,
+                }
+                if snap
+                else None,
             }
-            if snap
-            else None,
-        }
-        for plc, snap in rows
-    ]
+        )
+    return out
 
 
 def list_warnings(
