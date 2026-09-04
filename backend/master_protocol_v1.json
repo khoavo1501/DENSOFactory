@@ -19,44 +19,10 @@
       "$ref": "#/$defs/diag"
     },
     {
-      "type": "object",
-      "required": [
-        "status"
-      ],
-      "properties": {
-        "status": {
-          "type": "string",
-          "enum": [
-            "online",
-            "offline"
-          ]
-        },
-        "plc_id": {
-          "type": "string",
-          "maxLength": 128
-        },
-        "operating_status": {
-          "type": "string",
-          "enum": [
-            "running",
-            "stopped"
-          ]
-        },
-        "temperature": {
-          "type": "number"
-        },
-        "rpm": {
-          "type": "number"
-        },
-        "current_amp": {
-          "type": "number"
-        },
-        "heartbeat": {
-          "type": "integer",
-          "minimum": 0
-        }
-      },
-      "additionalProperties": true
+      "$ref": "#/$defs/plc_telemetry"
+    },
+    {
+      "$ref": "#/$defs/plc_status"
     }
   ],
   "$defs": {
@@ -426,6 +392,70 @@
           "required": [
             "stats"
           ]
+        }
+      ]
+    },
+    "plc_telemetry": {
+      "allOf": [
+        {
+          "type": "object",
+          "required": [
+            "plc_id",
+            "status",
+            "operating_status"
+          ],
+          "properties": {
+            "plc_id": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "online",
+                "offline"
+              ]
+            },
+            "operating_status": {
+              "type": "string",
+              "enum": [
+                "running",
+                "stopped"
+              ]
+            },
+            "temperature": {
+              "type": "number"
+            },
+            "rpm": {
+              "type": "number"
+            },
+            "current_amp": {
+              "type": "number"
+            },
+            "heartbeat": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "plc_status": {
+      "allOf": [
+        {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "online",
+                "offline"
+              ]
+            }
+          }
         }
       ]
     }

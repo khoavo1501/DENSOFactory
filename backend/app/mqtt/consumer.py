@@ -24,8 +24,6 @@ from app.mqtt.dispatch import (
     handle_status,
     handle_telemetry,
 )
-from app.services import plc as plc_service
-from app.ws.hub import get_hub as _get_hub
 
 
 _log = logging.getLogger(__name__)
@@ -175,14 +173,12 @@ async def _on_message(
         _log.warning("empty payload on %s; drop", topic)
         return
 
-    # Parse topic. Two conventions supported:
-    #   - devices/{device_id}/{category}  (M1-M9 legacy)
-    #   - plc-system/{master_id}/{category} (M10 plc-system gateway)
+    # Parse topic: devices/{device_id}/{category}
     parts = topic.split("/")
-    if len(parts) != 3 or parts[0] not in ("devices", "plc-system"):
-        _log.warning("topic %r does not match devices|plc-system/{id}/{cat}; drop", topic)
+    if len(parts) != 3 or parts[0] != "devices":
+        _log.warning("topic %r does not match devices/{id}/{cat}; drop", topic)
         return
-    topic_namespace, topic_device_id, topic_category = parts
+    _, topic_device_id, topic_category = parts
 
     # Parse JSON
     try:
@@ -195,16 +191,14 @@ async def _on_message(
         _log.warning("payload not an object on %s; drop", topic)
         return
 
-    # Envelope integrity: for devices/* the device_id field must match;
-    # for plc-system/* the plc_id field is used (master_id is the namespace).
-    if topic_namespace == "devices":
-        if payload.get("device_id") != topic_device_id:
-            _log.warning(
-                "device_id mismatch topic=%s payload=%s; drop",
-                topic_device_id,
-                payload.get("device_id"),
-            )
-            return
+    # Envelope integrity
+    if payload.get("device_id") != topic_device_id:
+        _log.warning(
+            "device_id mismatch topic=%s payload=%s; drop",
+            topic_device_id,
+            payload.get("device_id"),
+        )
+        return
 
     # Validate schema (oneOf picks the right branch)
     validator = loader.get()
@@ -213,18 +207,7 @@ async def _on_message(
         _log.warning("schema validation failed for %s: %s; drop", topic, errors[0].message)
         return
 
-    # M10: route plc-system messages to plc dispatcher
-    if topic_namespace == "plc-system":
-        db = SessionLocal()
-        try:
-            await _handle_plc_system(db, payload, topic_category, topic_device_id)
-        except Exception as e:
-            _log.exception("plc-system dispatch failed for %s: %s", topic, e)
-        finally:
-            db.close()
-        return
-
-    # Dispatch (DB writes + WS broadcast) for legacy devices/*
+    # Dispatch (DB writes + WS broadcast)
     db = SessionLocal()
     try:
         _dispatch(db, topic_category, payload)
@@ -240,66 +223,6 @@ async def _on_message(
         except Exception as e:
             _log.warning("influx write task failed: %s", e)
 
-
-
-
-async def _handle_plc_system(
-    db,
-    payload: dict,
-    category: str,
-    master_id: str,
-) -> None:
-    """Route plc-system/{master_id}/{status|telemetry}.
-
-    Auto-derives plc_id: from payload if present, else
-    {master_id}-PA15 (current firmware has 1 PLC per master).
-    Auto-creates gateway + PLC on first sight.
-    """
-    from datetime import datetime, timezone
-    from app.services import plc as plc_service
-
-    plc_id = payload.get("plc_id") or f"{master_id}-PA15"
-
-    if category == "status":
-        state = payload.get("status", "offline")
-        plc_service.update_gateway_status(db, master_id, state)
-        plc_service.upsert_plc(db, plc_id, master_id)
-        if state == "offline":
-            plc_service.raise_warning(
-                db,
-                target_type="gateway",
-                target_id=master_id,
-                severity="warning",
-                code="GATEWAY_OFFLINE",
-                message=f"Gateway {master_id} offline (LWT or retained)",
-            )
-        plc_service.save_snapshot(db, plc_id, master_id, payload)
-    elif category == "telemetry":
-        plc_service.update_plc_telemetry(db, plc_id, master_id, payload)
-        plc_service.save_snapshot(db, plc_id, master_id, payload)
-    else:
-        _log.info("plc-system: ignore category=%s", category)
-        return
-
-    from app.ws.hub import get_hub as _get_hub
-    hub = _get_hub()
-    msg = {
-        "type": "plc_update",
-        "master_id": master_id,
-        "plc_id": plc_id,
-        "category": category,
-        "payload": payload,
-        "ts": int(datetime.now(tz=timezone.utc).timestamp()),
-    }
-    import asyncio
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            loop.create_task(hub.publish(plc_id, msg))
-            loop.create_task(hub.publish(master_id, msg))
-            loop.create_task(hub.publish("*", msg))
-    except RuntimeError:
-        pass
 
 class Consumer:
     def __init__(self) -> None:
@@ -333,12 +256,9 @@ class Consumer:
                     port=self._settings.MQTT_BROKER_PORT,
                     keepalive=60,
                 ) as client:
-                    # M1-M9: legacy device-style topic. M10: plc-system
-                    # gateway topic (new convention).
                     await client.subscribe("devices/+/+")
-                    await client.subscribe("plc-system/+/+")
                     _log.info(
-                        "mqtt consumer connected to %s:%d (subscribed devices/+/+ and plc-system/+/+)",
+                        "mqtt consumer connected to %s:%d",
                         self._settings.MQTT_BROKER_HOST,
                         self._settings.MQTT_BROKER_PORT,
                     )

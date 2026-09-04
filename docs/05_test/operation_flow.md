@@ -31,11 +31,11 @@ version: 1.0.0
                                        │
                                        ▼
                     ┌──────────────────────────────────┐
-                    │   Backend (FastAPI)              │
+                    │   Backend (FastAPI)               │
                     │   ┌──────────────────────────┐   │
-                    │   │ MQTT Consumer (aiomqtt)   │  │
-                    │   │   - subscribe devices/+/+ │  │
-                    │   │   - validate JSON Schema  |   │
+                    │   │ MQTT Consumer (aiomqtt)   │   │
+                    │   │   - subscribe devices/+/+ │   │
+                    │   │   - validate JSON Schema  │   │
                     │   │   - dispatch by topic    │   │
                     │   └──────────┬───────────────┘   │
                     │              │                    │

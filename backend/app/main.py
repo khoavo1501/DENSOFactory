@@ -116,9 +116,6 @@ def create_app() -> FastAPI:
     app.include_router(exports.router)
     app.include_router(ws_router)
 
-    from app.api import m10 as m10_api
-    app.include_router(m10_api.router)
-
     @app.get("/healthz")
     def healthz():
         return {"status": "ok"}
