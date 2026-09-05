@@ -13,6 +13,6 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
-COPY simulator.py /app/simulator.py
+COPY ./ /app/simulator/
 
-CMD ["python", "-u", "/app/simulator.py"]
+CMD ["python", "-u", "-m", "simulator"]
