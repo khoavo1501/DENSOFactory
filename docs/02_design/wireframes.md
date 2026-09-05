@@ -3,285 +3,196 @@ title: Wireframes
 category: design
 owner: project_lead
 created: 2026-08-30
-updated: 2026-08-30
+updated: 2026-09-05
 status: approved
-version: 1.1.0
+version: 2.0.0
 ---
 
 # Wireframes
 
-ASCII wireframes cho 6 màn hình webapp (M3). Tất cả hiển thị ở **dark mode** (mặc định), ≥1280px desktop.
+ASCII wireframes cho 3 trang chính webapp (v2 — M10 design). Tất cả
+hiển thị ở **dark mode** (mặc định), ≥1280px desktop.
+
+Layout: TopBar 56px (full width) + Sidebar 220px (always visible) +
+Main (max 1440px, padding 24px).
 
 Legend:
-- `▦` icon-only nav item (active = có border trái)
-- `●` state dot (green=online, yellow=degraded, red=error, gray=offline)
-- `[SIM]` source badge (dashed)
-- `[REAL]` source badge (solid)
-- `≡` TopBar
-- `—` left rail
+- `◉` status dot online
+- `○` status dot offline
+- `◌` empty state
+- `[online]` `[offline]` status badge (text + dot)
+- `·` separator
+- `▣` icon (lucide, 16px)
 
 ---
 
 ## 1. Login (`/login`)
 
-```
-                          ┌────────────────────────────┐
-                          │                            │
-                          │   IIoT Gateway — Sign in   │
-                          │                            │
-                          │   USERNAME                 │
-                          │   ┌──────────────────────┐ │
-                          │   │ admin                │ │
-                          │   └──────────────────────┘ │
-                          │                            │
-                          │   PASSWORD                 │
-                          │   ┌──────────────────────┐ │
-                          │   │ ●●●●●●●●             │ │
-                          │   └──────────────────────┘ │
-                          │                            │
-                          │   ┌──────────────────────┐ │
-                          │   │     Sign in          │ │
-                          │   └──────────────────────┘ │
-                          │                            │
-                          └────────────────────────────┘
-```
+Public. No shell. Centered card with amber-tinted radial background.
 
-Public. No shell.
+```
+                       ┌────────────────────────────┐
+                       │ [IG]  iigw · webapp        │
+                       │                            │
+                       │  Sign in                   │
+                       │  Access the industrial     │
+                       │  telemetry dashboard.      │
+                       │                            │
+                       │  USERNAME                  │
+                       │  ┌──────────────────────┐  │
+                       │  │ admin                │  │
+                       │  └──────────────────────┘  │
+                       │                            │
+                       │  PASSWORD                  │
+                       │  ┌──────────────────────┐  │
+                       │  │ ●●●●●●●●             │  │
+                       │  └──────────────────────┘  │
+                       │                            │
+                       │  ┌──────────────────────┐  │
+                       │  │  → Sign in           │  │  ← primary amber
+                       │  └──────────────────────┘  │
+                       │                            │
+                       │  ─────────────────────     │
+                       │  default         admin     │
+                       │                  /admin123 │
+                       └────────────────────────────┘
+```
 
 ---
 
-## 2. Overview (`/`)
+## 2. Dashboard (`/`)
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
- IIoT Gateway  [DEV]                                    [Dark] admin · admin  [Logout]
+ [IG] IIoT Gateway [dev]              [◉ sound] [☀ Light] admin [ADMIN] [⎋]    ← topbar 56
 ═══════════════════════════════════════════════════════════════════════════════
-   ▦     │   Overview              3 devices        [All][Sim][Real] [↻]
-  (active)│
-   ✦     │
-   ◆     │   ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-   ⚙     │   │ ● GW_LINE_A_01  │ │ ● GW_LINE_A_02  │ │ ● GW_LINE_B_01  │
-         │   │   [REAL]        │ │   [REAL]        │ │   [REAL]        │
-         │   │                 │ │                 │ │                 │
-         │   │   35.2 °C       │ │   72.1 %RH      │ │   142.0 bar     │
-         │   │   ──/\──        │ │   ──/\──        │ │   ─/\──         │
-         │   │   state: online │ │   state: online │ │   state: online │
-         │   │   11:23:45      │ │   11:23:45      │ │   11:23:45      │
-         │   └─────────────────┘ └─────────────────┘ └─────────────────┘
-         │
-         │   Toast (top-right, M3):                    ┌──────────────────────┐
-         │                                              │ SLAVE_COMM_LOST ×    │
-         │                                              │ critical · 2s ago    │
-         │                                              │ Slave 3 timeout      │
-         │                                              └──────────────────────┘
-         │
-         │   Logged in as admin. Use Settings to toggle Simulator / change
-         │   source mapping.
+│ OVERVIEW │ Dashboard                                  3 of 5 gateways online   │ ← sidebar
+│  • Dash  │ ─────────────────────────────────────────────────────────────────│   220
+│          │                                                                    │
+│          │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐         │
+│          │  │ ⌂              │  │ ◐              │  │ △              │         │
+│          │  │ GATEWAYS ONLINE│  │ PLC ONLINE     │  │ ACTIVE WARNINGS│         │  ← 3 stat cards
+│          │  │   3 / 5       │  │   3 / 5       │  │     0          │         │     280px
+│          │  │ 60% online    │  │ all connected  │  │ all clear      │         │     wide each
+│          │  └────────────────┘  └────────────────┘  └────────────────┘         │
+│          │                                                                    │
+│          │  ┌──────────────────┐  ┌──────────────────┐                        │
+│          │  │ ◉ SIM_LINE_A_01  │  │ ◉ SIM_LINE_A_02  │   ← hover: lift 2px    │  ← grid
+│          │  │   ▣ Aichi        │  │   ▣ Aichi        │     + amber border      │     280px+
+│          │  │ PLC  3/3 online │  │ PLC  1/1 online │                        │
+│          │  │ fw    1.0.0     │  │ fw    1.0.0     │                        │
+│          │  │ sync  14:23:01  │  │ sync  14:23:01  │                        │
+│          │  │ SIM_LINE_A_01 ›│  │ SIM_LINE_A_02 ›│                        │
+│          │  └──────────────────┘  └──────────────────┘                        │
+│          │  ┌──────────────────┐  ┌──────────────────┐                        │
+│          │  │ ◉ SIM_LINE_B_01  │  │ ○ BTN_PA15_01    │                        │
+│          │  │   …              │  │   …              │                        │
+│          │  └──────────────────┘  └──────────────────┘                        │
+│          │                                                                    │
 ```
 
-Layout: 4 col grid auto-fill, card 280px min.
+Each gateway card on hover: `translateY(-2px)` + amber border.
+Empty state (no gateways): big card with `◌` icon + heading "No gateways
+yet" + body + retry button.
 
 ---
 
-## 3. Device Detail (`/devices/:id`)
-
-```
-═══════════════════════════════════════════════════════════════════════════════
- ≡
-   ▦     │   ← Back   SIM_LINE_A_01   [SIM]  ●  online  · uptime 3600s
-         │
-   ✦     │   ┌──────────────────────────────────────────────────────────┐
-         │   │ Telemetry (live)                                          │
-   ◆     │   ├──────────────────────────────────────────────────────────┤
-         │   │ hr_100       352                                       │
-   ⚙     │   │ hr_101       315                                       │
-         │   │ co_0         true   @ 11:23:45                          │
-         │   │ di_300       false  @ 11:23:45                          │
-         │   └──────────────────────────────────────────────────────────┘
-         │
-         │   ┌──────────────────────────────────────────────────────────┐
-         │   │ Status (last 24h)              [5m][1h][6h][24h][7d]     │
-         │   │ ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱  │
-         │   └──────────────────────────────────────────────────────────┘
-         │
-         │   ┌──────────────────────────────────────────────────────────┐
-         │   │ Events (recent)                                          │
-         │   │ 11:20:01  critical  SLAVE_COMM_LOST   "Slave 3 timeout"   │
-         │   │ 11:18:30  warning   VALUE_OUT_OF_RANGE "hr_100=1250"      │
-         │   └──────────────────────────────────────────────────────────┘
-         │
-         │   (M4) gauge + history chart for selected register
-```
-
-Tabs thực tế ở M4. M3 chỉ show Telemetry + Status + Events.
-
----
-
-## 4. Events (`/events`)
+## 3. Gateway Detail (`/gateways/:gateway_id`)
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-   ▦     │   Events (last 24h)         [All][Critical][Warning][Info]
-         │
-  (✦)    │   ┌─────────────┬────────────┬─────────────┬──────────┬───────────┐
-  active  │   │ Time        │ Severity   │ Code        │ Device   │ Message   │
-         │   ├─────────────┼────────────┼─────────────┼──────────┼───────────┤
-   ◆     │   │ 11:20:01    │ critical   │ SLAVE_...   │ SIM_L_A01│ Slave 3.. │
-   ⚙     │   │ 11:18:30    │ warning    │ VALUE_...   │ SIM_L_A01│ hr_100=.. │
-         │   │ 10:55:12    │ info       │ POWER_ON    │ GW_L_B_01│ just po.. │
-         │   │ ...                                                       │
-         │   └─────────────┴────────────┴─────────────┴──────────┴───────────┘
-         │                                       [← Prev] Page 1 [Next →]
+ [IG] IIoT Gateway [dev]              [◉ sound] [☀ Light] admin [ADMIN] [⎋]
+═══════════════════════════════════════════════════════════════════════════════
+│ OVERVIEW │ Dashboard  ›  SIM_LINE_A_01                                    │
+│  • Dash  │ ─────────────────────────────────────────────────────────────────│
+│          │                                                                    │
+│          │  SIM_LINE_A_01  3 PLCs online                          [↻]       │
+│          │                                                                    │
+│          │  ┌────┐ SIM_LINE_A_01                                             │  ← status header
+│          │  │ ▣  │ gateway_id SIM_LINE_A_01 · fw 1.0.0 · seen 14:23:01        │     card with
+│          │  └────┘                                              [online ●]    │     amber accent
+│          │                                                                    │
+│          │  PLC             STATUS  MODE   TEMP    RPM   AMPS   HB   SEEN    │  ← table
+│          │  ──────────────────────────────────────────────────────────────│     rows
+│          │  ◉ SIM_LINE_A_01  online  run 79.7°C  304   0.0A   #1  14:23:01   │     hover bg
+│          │  ◉ SIM_LINE_A_02  online  run 43.7°C  760   0.1A   #0  14:23:01   │
+│          │  ◉ SIM_LINE_B_01  online  run 41.7°C  405   0.0A   #1  14:23:01   │  ← click
+│          │                                                               ›   │     → PLC
+│          │                                                                    │
+│          │  (no active warnings)                                              │
+│          │                                                                    │
+│          │  Polling 60s default. Updated 14:23:01.                            │  ← mono footer
 ```
 
-Filter bar: severity multi, code multi, device multi, time range (M5).
+Offline gateway: header icon border + status badge turn red.
+Empty (no PLCs): centered `No PLCs assigned` empty state.
 
 ---
 
-## 5. Diagnostics (`/diagnostics`)
+## 4. PLC Detail (`/gateways/:gatewayId/plc/:plcId`)
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-   ▦     │   Diagnostics
-         │
-   ✦     │   ┌────────────┬────────────┬──────┬──────┬──────┬─────────┬───────┐
-         │   │ Device     │ Last diag  │ Poll │ TX+  │ TX-  │ Latency │ Uptime│
-   (◆)   │   ├────────────┼────────────┼──────┼──────┼──────┼─────────┼───────┤
-  active  │   │ GW_LINE_A01│ 11:20:00   │ 120  │ 43200│ 3    │ 10.2 ms │ 86400 │
-   ⚙     │   │ GW_LINE_A02│ 11:20:00   │ 115  │ 43150│ 0    │  8.7 ms │ 86400 │
-         │   │ SIM_LINE_B01│ 11:20:00  │ 118  │ 43200│ 0    │  9.1 ms │ 86400 │
-         │   └────────────┴────────────┴──────┴──────┴──────┴─────────┴───────┘
-         │
-         │   ┌──────────────────────────────────────────────────────────┐
-         │   │ Diag history — GW_LINE_A_01             288 rows        │
-         │   ├──────────────────────────────────────────────────────────┤
-         │   │ Time        │ Poll (ms) │ Latency (ms) │ TX ok/fail       │
-         │   │ 11:20:00    │ 120       │ 10.2         │ 43200/3          │
-         │   │ 11:15:00    │ 118       │ 10.4         │ 43180/3          │
-         │   │ ...                                                       │
-         │   └──────────────────────────────────────────────────────────┘
-```
-
-Click row → drawer per-slave stats (M5).
-
----
-
-## 6. Settings (`/settings`)
-
-```
+ [IG] IIoT Gateway [dev]              [◉ sound] [☀ Light] admin [ADMIN] [⎋]
 ═══════════════════════════════════════════════════════════════════════════════
-   ▦     │   Settings
-         │
-   ✦     │   ┌──────────────────────────────────────────────────────────┐
-   ◆     │   │ Simulator Service                  [RUNNING]              │
- (⚙)    │   │ Toggle the simulator container. Real data unaffected.    │
- active  │   │ [Start] [Stop]                                         │
-         │   └──────────────────────────────────────────────────────────┘
-         │
-         │   ┌──────────────────────────────────────────────────────────┐
-         │   │ Source Mapping     Override pattern inference per device│
-         │   │ ┌──────────────────────┐  ┌──────────┐                  │
-         │   │ │ SIM_OVERRIDE_01      │  │ simulated▼│   [Add]         │
-         │   │ └──────────────────────┘  └──────────┘                  │
-         │   ├──────────────────────────────────────────────────────────┤
-         │   │ DEVICE_ID          │ Source │ Updated         │         │
-         │   ├────────────────────┼────────┼─────────────────┼─────────┤
-         │   │ GW_LINE_A_01        │ [REAL] │ 2026-08-30 10:00│[Remove] │
-         │   │ SIM_LINE_A_01       │ [SIM]  │ 2026-08-30 09:55│[Remove] │
-         │   │ TEST_DEVICE         │ [SIM]  │ 2026-08-29 18:30│[Remove] │
-         │   └──────────────────────────────────────────────────────────┘
-         │
-         │   ┌──────────────────────────────────────────────────────────┐
-         │   │ User          │ Role    │ Created                          │
-         │   │ admin         │ admin   │ 2026-08-30 09:00                 │
-         │   │ (M5: user management — create viewer, change password)   │
-         │   └──────────────────────────────────────────────────────────┘
+│ OVERVIEW │ Dashboard  ›  SIM_LINE_A_01  ›  SIM_LINE_A_01                    │
+│  • Dash  │ ─────────────────────────────────────────────────────────────────│
+│          │                                                                    │
+│          │  ← Back   SIM_LINE_A_01 [sim] ◉  online  · uptime 152s            │
+│          │                                                                    │
+│          │  ┌──────────┬──────────┬──────────┬──────────┐                     │  ← info header
+│          │  │ temperature  │    rpm      │  current  │ heartbeat│            │     4-cell
+│          │  │  79.7°C     │    304     │   0.0A    │   #1     │            │     mono grid
+│          │  └──────────┴──────────┴──────────┴──────────┘                     │
+│          │                                                                    │
+│          │  range:  [15m] [1h] [6h] [24h]                tick #142             │
+│          │                                                                    │
+│          │  ┌──────────────────────┐  ┌──────────────────────┐               │
+│          │  │ ◐ Temperature        │  │ ◐ RPM                │               │  ← 2 chart cards
+│          │  │ 79.7°C               │  │ 304                  │               │     recharts
+│          │  │   ╱╲╱╲╱╲╱╲╱╲╱╲╱╲     │  │   ╱╲╱╲╱╲╱╲╱╲╱╲     │               │     LineChart
+│          │  │ 103 points · 1h      │  │ 103 points · 1h      │               │
+│          │  └──────────────────────┘  └──────────────────────┘               │
+│          │  ┌──────────────────────┐                                         │
+│          │  │ ◐ Current            │                                         │
+│          │  │ 0.0A                 │                                         │
+│          │  └──────────────────────┘                                         │
+│          │                                                                    │
+│          │  gateway SIM_LINE_A_01 · last seen 14:23:01                         │
 ```
 
-Admin-only. User management section is M5 scope.
-
----
-
-## 7. Toast overlay (M3 mới, top-right fixed)
+PLC offline state replaces ALL chart cards with one centered empty state:
 
 ```
-                                                              ┌────────────────────┐
-                                                              │ ⚠ SLAVE_COMM_LOST  ×│
-                                                              │ critical · 2s ago  │
-                                                              │ Slave 3 timeout    │
-                                                              │ after 3 retries    │
-                                                              │ [View]              │
-                                                              └────────────────────┘
-                                                              ┌────────────────────┐
-                                                              │ ⓘ POWER_ON         ×│
-                                                              │ info · 5s ago      │
-                                                              │ SIM_LINE_B_01      │
-                                                              └────────────────────┘
+│          │  ┌────────────────────────────────────────────┐                    │
+│          │  │              [⊘]                           │                    │
+│          │  │                                            │                    │
+│          │  │          PLC offline                       │                    │
+│          │  │                                            │                    │
+│          │  │  Connection to SIM_LINE_B_01 was lost.     │                    │
+│          │  │  Last seen Sep 5, 14:18:42.                │                    │
+│          │  │  History charts will resume once the       │                    │
+│          │  │  device reconnects.                        │                    │
+│          │  │                                            │                    │
+│          │  │            [↻ Retry]                      │                    │
+│          │  │                                            │                    │
+│          │  └────────────────────────────────────────────┘                    │
 ```
 
-- Max 5 stack.
-- Critical: no auto-dismiss, manual X.
-- Warning/info: 8s auto-dismiss.
-- `aria-live="assertive"` cho critical, `polite` cho warning/info.
-- Sound OFF by default, toggle trong user menu.
+## 5. State coverage
 
----
-
-## 8. Mobile / tablet graceful-degrade (<1024px hoặc 1024–1279)
-
-```
-┌──────────────────────────────────┐
-│ ≡ IIoT Gateway    [Dark] admin  │
-├──────────────────────────────────┤
-│ ▦ ✦ ◆ ⚙  (horizontal scroll)   │
-├──────────────────────────────────┤
-│                                  │
-│ ┌──────────────────────────────┐ │
-│ │ ● GW_LINE_A_01   [REAL]      │ │
-│ │   35.2 °C                    │ │
-│ │   state: online              │ │
-│ └──────────────────────────────┘ │
-│ ┌──────────────────────────────┐ │
-│ │ ● GW_LINE_A_02   [REAL]      │ │
-│ │   72.1 %RH                   │ │
-│ └──────────────────────────────┘ │
-│                                  │
-│ (1 col stack, full width cards)  │
-└──────────────────────────────────┘
-```
-
-Tablet 1024–1279px: 2 col grid, gauge -20% size.
-<1024px: 1 col, banner cảnh báo "recommended: desktop/tablet".
-
----
-
-## 9. State transitions
-
-| From | To | Visual cue |
-|---|---|---|
-| `online` → `degraded` | State dot yellow + soft glow |
-| `online` → `error` | State dot red + 0.6s pulse + critical toast + (sound) |
-| `error` → `offline` | State dot gray (no pulse) + toast info |
-| `offline` → `online` | State dot green + toast info "device back online" |
-| Source mapping changed | Source badge fade 200ms (no flash) |
-
----
-
-## 10. Mapping to design system
-
-| Wireframe element | Token / class |
-|---|---|
-| TopBar | `.topbar`, height `--topbar-height` |
-| Left rail | `.rail`, width `--rail-width` |
-| State dot | `.dot` + `.dot.<state>` (with pulse for `error`) |
-| Source badge | `.badge.simulated` (dashed) / `.badge.real` (solid) |
-| Severity chip | `.sev-info` / `.sev-warning` / `.sev-critical` |
-| Card | `.card`, padding `--space-2` |
-| Table | row height `--row-table` (28px) |
-| Button primary | `.btn.btn-primary`, height `--row-list` |
-| Toast | `.toast-stack` (M3 mới), z `--z-toast` |
+| Surface | Loading | Empty | Error |
+|---|---|---|---|
+| Dashboard stat cards | `—` placeholder values | "0" | red value + "all offline" hint |
+| Dashboard gateway grid | 6 skeleton cards, 1.4s shimmer | `◌` icon + "No gateways yet" | alert card + retry |
+| Gateway table | `loading PLCs…` in row | "No PLCs assigned" in row | inline error card |
+| PLC info header | "loading…" subtitle | "PLC not found" empty state | — |
+| PLC charts | `loading history…` in chart | "No data in this range" | "Connection failed. Please try again." toast |
+| PLC offline | n/a (no charts render) | WifiOff icon + retry card | n/a |
 
 ## Change history
 
-- 2026-08-30: Tạo wireframes.md (M3, v1.0.0) — 6 màn hình + toast + responsive + state transitions.
-- 2026-08-30: M4 — note trạng thái delivered: Login (M2), Overview (M2), DeviceDetail (M4 với tabs Telemetry/Status/Events/Diag/Info), Events (M4 với time range + code multi-select), Diagnostics (M2), Settings (M2).
+- 2026-09-05: Redesign v2.0.0 — 3 trang chính (Dashboard, Gateway,
+  PLC), sidebar nav 220px, IBM Plex + amber accent, recharts charts.
+- 2026-08-30: Wireframes v1.1.0 — 6 màn hình (Login, Overview,
+  DeviceDetail, Events, Diagnostics, Settings) với icon rail.

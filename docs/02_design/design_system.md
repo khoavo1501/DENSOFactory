@@ -3,24 +3,27 @@ title: Design System
 category: design
 owner: project_lead
 created: 2026-08-30
-updated: 2026-08-30
+updated: 2026-09-05
 status: approved
-version: 1.0.0
+version: 2.0.0
 ---
 
 # Design System
 
-> Nguồn chân lý cho visual language của IIoT Gateway webapp (M3 chốt).
-> Liên kết trực tiếp với implementation: `webapp/src/styles/tokens.css`.
+> Nguồn chân lý cho visual language của IIoT Gateway webapp.
+> Liên kết trực tiếp với implementation: `webapp/src/styles/tokens.css`
+> và `webapp/src/styles/app.css`.
 
-Phong cách tổng thể (D-02): **Grafana-style + High-Performance HMI**, mật độ SCADA, tối ưu cho operator đứng 8h/ngày.
+Phong cách tổng thể: **Enterprise SCADA / HMI** theo brief, dựa trên
+Grafana dashboard pattern. Mật độ vừa phải (operator 8h/ngày), accent
+amber `#E0973B` để cảnh báo tách bạch với state (green/red).
 
 ## 1. Nguyên tắc thiết kế
 
-1. **Mật độ thông tin cao** (D-10) — operator cần thấy nhiều data cùng lúc, không cuộn nhiều.
-2. **Đọc nhanh** — số dùng `tabular-nums`, màu sắc semantic, không gradient/glassmorphism.
-3. **Phản hồi tức thì** — state dot pulse, badge nguồn phân biệt rõ, toast cho critical event.
-4. **Predictable** — cùng một vị trí luôn hiển thị cùng loại thông tin.
+1. **Mật độ thông tin vừa** — operator thấy data cùng lúc, không cuộn nhiều.
+2. **Đọc nhanh** — số dùng `tabular-nums`, màu sắc semantic, không gradient.
+3. **Phản hồi tức thì** — state dot pulse (chỉ critical), hover lift, skeleton loader.
+4. **Predictable** — breadcrumb drill-down: Dashboard → Gateway → PLC.
 5. **English-only** (D-09) — toàn bộ label, message, code.
 
 ## 2. Color tokens
@@ -28,73 +31,74 @@ Phong cách tổng thể (D-02): **Grafana-style + High-Performance HMI**, mật
 ### 2.1 Surface (dark mode — mặc định)
 | Token | Hex | Mục đích |
 |---|---|---|
-| `--bg-base` | `#0f1419` | App background |
-| `--bg-elevated` | `#1a212b` | Card, panel |
-| `--bg-overlay` | `#232b36` | Modal, dropdown |
-| `--bg-hover` | `#2a3340` | Hover state |
-| `--border` | `#2d3748` | Divider 1px |
-| `--border-strong` | `#3d4856` | Emphasized border |
+| `--bg-base` | `#0d1117` | App background |
+| `--bg-elevated` | `#151b23` | Card, panel, topbar |
+| `--bg-overlay` | `#1c232c` | Dropdown, modal |
+| `--bg-hover` | `#1f2731` | Hover state |
+| `--border` | `#2a323d` | Divider 1px |
+| `--border-strong` | `#3a4452` | Emphasized border |
 
 ### 2.2 Surface (light mode)
 | Token | Hex |
 |---|---|
-| `--bg-base` | `#f7f8fa` |
+| `--bg-base` | `#f2f4f7` |
 | `--bg-elevated` | `#ffffff` |
 | `--bg-overlay` | `#ffffff` |
-| `--bg-hover` | `#eef0f3` |
+| `--bg-hover` | `#ebeef3` |
 | `--border` | `#d8dde3` |
 | `--border-strong` | `#b8c0cb` |
 
 ### 2.3 Text
 | Token | Dark | Light |
 |---|---|---|
-| `--text-primary` | `#e6edf3` | `#11151a` |
-| `--text-secondary` | `#9ca8b8` | `#5a6573` |
-| `--text-muted` | `#6b7785` | `#8a95a3` |
-| `--text-inverse` | `#0f1419` | `#ffffff` |
+| `--text-primary` | `#e8ecf2` | `#0f1620` |
+| `--text-secondary` | `#9aa6b6` | `#4a5663` |
+| `--text-muted` | `#6b7684` | `#7a8593` |
+| `--text-inverse` | `#0d1117` | `#ffffff` |
 
-### 2.4 State (device status, D-22)
+### 2.4 Accent (amber)
+- `--accent` `#e0973b` (dark) / `#c87f1d` (light) — dùng cho focus ring,
+  active nav, primary button, link, hover lift border.
+- `--accent-soft` `rgba(224, 151, 59, 0.14)` — accent fill nhạt (active
+  nav background, card icon container).
+
+### 2.5 State (device)
 | Token | Dark | Light | Mục đích |
 |---|---|---|---|
-| `--state-online` | `#16a34a` | `#15803d` | `online` |
-| `--state-degraded` | `#eab308` | `#ca8a04` | `degraded` |
-| `--state-error` | `#dc2626` | `#b91c1c` | `error` |
-| `--state-offline` | `#6b7280` | `#4b5563` | `offline` |
+| `--state-online` | `#39c58f` | `#2a9d72` | `online` |
+| `--state-degraded` | `#e0973b` | `#c87f1d` | `degraded` |
+| `--state-error` | `#db5a5a` | `#c04444` | `error` (collapse) |
+| `--state-offline` | `#7a8493` | `#6b7682` | `offline` |
 
-State dot: 8x8px, pulse animation 0.6s khi `error`.
-
-### 2.5 Severity (event, D-22)
+### 2.6 Severity (event)
 | Token | Dark | Light |
 |---|---|---|
-| `--severity-info` | `#3b82f6` | `#2563eb` |
-| `--severity-warning` | `#f97316` | `#ea580c` |
-| `--severity-critical` | `#ef4444` | `#dc2626` |
+| `--severity-info` | `#5aa6e0` | `#2563eb` |
+| `--severity-warning` | `#e0973b` | `#c87f1d` |
+| `--severity-critical` | `#db5a5a` | `#c04444` |
 
-### 2.6 Source (D-11)
-| Token | Dark | Light | Badge style |
-|---|---|---|---|
-| `--source-simulated` | `#a78bfa` | `#7c3aed` | Dashed border, "SIM" |
-| `--source-real` | `#38bdf8` | `#0284c7` | Solid border, "REAL" |
+### 2.7 Source
+| Token | Dark | Light |
+|---|---|---|
+| `--source-simulated` | `#b48ee6` | `#7c3aed` |
+| `--source-real` | `#39c5e0` | `#0284c7` |
 
-### 2.7 Accent
-`--accent` (#3b82f6 dark / #2563eb light) dùng cho: focus ring, active nav, primary button, link.
-
-## 3. Typography (D-10)
+## 3. Typography
 
 | Token | Value | Mục đích |
 |---|---|---|
-| `--font-sans` | Inter | UI text |
-| `--font-mono` | JetBrains Mono | Giá trị số, register, ts |
+| `--font-sans` | IBM Plex Sans | UI text, headings, body |
+| `--font-mono` | IBM Plex Mono | device_id, register, telemetry values, ts |
 
-Sizes (CSS rem-equivalent, base 13px):
-- `h1`: 16px / 600
-- `card-title`: 13px / 600
-- `body`: 13px / 400
-- `muted` / `kv .k`: 11px / uppercase + letter-spacing 0.5
-- `numeric` (table cells): tabular-nums, mono
-- `display` (gauge, big number): 22px / 600
+Sizes (`rem` based, root 14px):
+- h1 page: 28px / 600 / `letter-spacing: -0.025em`
+- card-title: 14px / 600 / `letter-spacing: -0.01em`
+- body: 13px / 400
+- eyebrow: 11px / 500 / lowercase / `letter-spacing: 0.04em`
+- numeric (tables): Plex Mono / `tabular-nums`
+- display (gauge, big number): 24-40px / 600 / `letter-spacing: -0.03em`
 
-## 4. Spacing (3-step scale, D-10)
+## 4. Spacing (4-step scale)
 
 | Token | px |
 |---|---|
@@ -103,114 +107,152 @@ Sizes (CSS rem-equivalent, base 13px):
 | `--space-3` | 16 |
 | `--space-4` | 24 |
 | `--space-5` | 32 |
-
-Không dùng 4/6/10. Padding trong card/panel/button thuộc 1 trong 3 step này.
+| `--space-6` | 48 |
 
 ## 5. Density (SCADA, D-10)
 
 | Token | px | Mục đích |
 |---|---|---|
-| `--row-table` | 28 | Table row |
-| `--row-list` | 32 | List/card body |
-| `--row-header` | 36 | Section header |
+| `--row-table` | 32 | Table row |
+| `--row-list` | 36 | List/card body |
+| `--row-header` | 40 | Section header |
 
 ## 6. Layout (D-03, D-05)
 
 | Token | px | Mục đích |
 |---|---|---|
-| `--topbar-height` | 48 | Top bar |
-| `--rail-width` | 60 | Left rail icon-only (default) |
-| `--rail-width-expanded` | 200 | Left rail expanded (hover) |
+| `--topbar-height` | 56 | Top bar |
+| `--sidebar-width` | 220 | Left sidebar (always visible) |
+| `--content-max` | 1440 | Page max-width container |
 
 Grid:
 ```
-┌────────────────────────────┐
-│        TopBar (48px)        │
-├──────┬─────────────────────┤
-│      │                     │
-│ Rail │      Main           │
-│ 60px │                     │
-└──────┴─────────────────────┘
+┌──────────────────────────────────────────┐
+│           TopBar (56px)                  │
+├──────────┬───────────────────────────────┤
+│          │                               │
+│ Sidebar  │   Main (max 1440px)           │
+│ 220px    │   - breadcrumb                 │
+│          │   - page header (h1 + meta)    │
+│          │   - stat cards / table / chart │
+│          │                               │
+└──────────┴───────────────────────────────┘
 ```
+
+Top bar (56px) chứa: brand mark + env chip + spacer + sound toggle +
+theme toggle (Dark/Light) + user (username + role pill + sign out).
+
+Sidebar (220px) chứa: 1 nav group "Overview" → Dashboard. (M10+ sẽ
+thêm Gateways / Events / Diagnostics / Settings tuỳ brief.)
 
 ## 7. Radius
 
-| Token | px |
-|---|---|
-| `--radius-sm` | 4 (input, badge) |
-| `--radius-md` | 6 (card, button) |
-| `--radius-lg` | 8 (modal) |
+| Token | px | Mục đích |
+|---|---|---|
+| `--radius-xs` | 3 | env chip, role pill |
+| `--radius-sm` | 4 | input, badge, btn |
+| `--radius-md` | 6 | card, button (default) |
+| `--radius-lg` | 8 | modal |
+| `--radius-xl` | 12 | (reserved) |
+
+Shape Consistency Lock: tất cả element dùng một trong các token trên.
+Không hardcode `border-radius` ở component.
 
 ## 8. Z-index
 
 | Token | Value | Mục đích |
 |---|---|---|
+| `--z-sticky` | 50 | Sticky topbar |
 | `--z-modal` | 900 | Modal, drawer |
 | `--z-toast` | 1000 | Toast top-right |
 
 ## 9. Motion
 
-- **State dot pulse** (D-22): `transform: scale(1)→1.4→1`, 0.6s ease-out, chỉ chạy 1 lần khi state chuyển sang `error`.
-- **Toast slide-in**: top-right, fade + slide 8px từ phải, 200ms.
-- **Source badge fade**: khi mapping thay đổi, fade 200ms (no flash).
-- **Hover**: transition 100ms trên background/border.
-- **Không dùng**: parallax, scroll-jacking, animation quá 300ms (gây mỏi mắt operator).
+Tokens: `--t-fast: 120ms`, `--t-base: 180ms`, `--t-slow: 280ms`,
+`--ease: cubic-bezier(0.2, 0.8, 0.2, 1)`.
 
-## 10. Components (từ plan_uiux_concept.md, đã implement ở M2)
+- **State dot pulse** (D-22): `box-shadow` mở rộng + fade, 1.6s
+  infinite, chỉ trên `error` (không dùng trên degraded/online).
+- **Card hover lift**: `translateY(-2px) + box-shadow` tăng + border
+  đổi sang `--accent`, 180ms.
+- **Button active**: `translateY(1px)`, 120ms — giả lập phím bấm vật lý.
+- **Skeleton shimmer**: gradient chạy ngang, 1.4s loop.
+- **Reduced motion**: tắt tất cả animation/transition khi user prefers.
+
+Không dùng: parallax, scroll-jacking, animation > 400ms.
+
+## 10. Components
 
 | Component | File | Mục đích |
 |---|---|---|
-| `Shell` | `webapp/src/components/Shell.tsx` | TopBar + left rail layout |
-| `DeviceCard` | `webapp/src/components/DeviceCard.tsx` | 1 device trên Overview |
-| `StateDot` | `webapp/src/components/Indicators.tsx` | Dot 8px với pulse cho `error` |
-| `SourceBadge` | `webapp/src/components/Indicators.tsx` | "SIM" / "REAL" badge |
-| `SeverityChip` | `webapp/src/components/Indicators.tsx` | info/warning/critical |
-| `ToastStack` | M3 (mới) | Top-right toast cho critical event |
+| `Shell` | `webapp/src/components/Shell.tsx` | TopBar + sidebar layout |
+| `Breadcrumb` + `PageHeader` | `webapp/src/components/Breadcrumb.tsx` | Drill-down + page title |
+| `StatusBadge` | `webapp/src/components/Indicators.tsx` | "online"/"offline"/"warning" pill với dot |
+| `StatusDot` | `webapp/src/components/Indicators.tsx` | 8px dot, pulse chỉ cho error |
+| `SourceBadge` | `webapp/src/components/Indicators.tsx` | "sim"/"real" |
+| `GatewayCard` + `StatCard` | `webapp/src/components/GatewayCard.tsx` | Dashboard grid + stat cards |
+| `Gauge` (replacing) | (via recharts LineChart) | telemetry time-series |
 
-## 11. Toast specification (D-07, M3 mới)
+Icon: `lucide-react` (stroke 1.5–2.0, 14–22px). Không vẽ SVG inline.
 
-Vị trí: top-right, fixed, `z-index: 1000`.
+## 11. Page patterns (3 trang chính)
 
-Lifecycle:
-- `info` / `warning`: auto-dismiss 8s.
-- `critical`: KHÔNG auto-dismiss. Có nút X manual close.
+### 11.1 Dashboard (`/`)
+- 3 stat cards (gateways online, PLCs online, active warnings)
+- Gateway grid (auto-fill minmax 280px) — hover lift + accent border
+- Empty state: "No gateways yet" + action hint (admin link)
+- Loading: 6 skeleton cards, 1.4s shimmer
 
-Visual:
-- Width: 320px, max 5 toasts cùng lúc.
-- Background: `--bg-elevated` với border-left 4px theo severity color.
-- Icon: SVG icon nhỏ bên trái (info / warn / bell).
-- Title (severity + code) + message + ts relative ("3s ago").
-- Action button (optional): "View" → navigate tới event detail.
+### 11.2 Gateway Detail (`/gateways/:gateway_id`)
+- Breadcrumb: Dashboard / {gateway name}
+- Status header: icon + name + meta strip (gateway_id, fw, ip, loc, seen) + status badge
+- PLC data table: status dot + mode + temp/rpm/amps/heartbeat + last seen
+  - Row hover background, click → drill to PLC
+- Active warnings card (if any)
 
-Sound:
-- Default **OFF** (D-07).
-- Toggle trong user menu (TopBar), persist localStorage `iigw.sound`.
-- File: `/sounds/critical.mp3` (load lazy, 1 file, <50KB).
+### 11.3 PLC Detail (`/gateways/:gatewayId/plc/:plcId`)
+- Breadcrumb: Dashboard / {gateway} / {plc_id}
+- 4-cell info header: temperature, RPM, current, heartbeat (mono)
+- Time range quick selector: 15m / 1h / 6h / 24h
+- 3 LineChart cards (recharts) — temperature / RPM / current
+- **Offline empty state** khi `plc.status == "offline"`:
+  icon WifiOff, thông báo "PLC offline" + last seen + retry button
 
-Group rule: nếu cùng `code` xuất hiện trong 5s → update toast hiện có (count++), không tạo mới.
+## 12. Forms
 
-## 12. Accessibility (baseline)
+- Label trên input, helper text optional, error dưới input.
+- Inputs có `focus-visible` ring (`box-shadow: var(--shadow-focus)`).
+- Login card có radial gradient background tint amber trên dark mode.
 
-- Contrast ratio ≥ 4.5:1 cho mọi text (verified cho cả dark + light).
-- Focus ring: `outline: 2px solid var(--accent)` với `outline-offset: 2px`.
-- Keyboard: tab order hợp lý, Esc đóng modal/toast, Enter submit form.
-- ARIA: `aria-live="polite"` cho toast, `aria-live="assertive"` cho critical.
-- Icon-only buttons: phải có `aria-label` hoặc `title`.
+## 13. Accessibility (baseline)
 
-## 13. Responsive
+- Contrast ≥ 4.5:1 cho body text (verified).
+- Focus ring: `outline: 2px solid var(--accent)` + offset 2px.
+- Skip-to-content link (ẩn, hiện khi focus) trên top of shell.
+- Keyboard: tab order, Enter submit, Esc đóng.
+- ARIA: `aria-label` trên icon-only buttons, `aria-pressed` cho sound
+  toggle, `aria-live` cho toast, `role="alert"` cho error messages.
+- Tables có `<thead>` đúng cấu trúc, `<th>` với scope ngầm định.
+
+## 14. Responsive
 
 | Breakpoint | Layout |
 |---|---|
-| `≥1280` | Desktop: 4 col grid Overview, full layout |
-| `1024–1279` | Tablet: 2 col grid, left rail icon-only mặc định, gauge -20% size |
-| `<1024` | Mobile graceful-degrade: 1 col, cảnh báo "vui lòng dùng desktop/tablet", chart cuộn ngang |
+| `≥1024` | Desktop: 3-col stat grid, full sidebar |
+| `768–1023` | Tablet: 2-col stat grid, 1-col chart grid |
+| `<768` | Mobile: 1-col stack, sidebar collapses to top dropdown (future) |
 
-## 14. Resources
+## 15. Resources
 
-- Reference: Grafana dashboard UI patterns
-- Fonts: Inter (UI), JetBrains Mono (numbers)
-- Icons: emoji + Unicode glyphs (mục tiêu M3, custom SVG ở M5+)
+- Fonts: IBM Plex Sans (UI), IBM Plex Mono (numbers) — Google Fonts
+- Icons: `lucide-react`
+- Charts: `recharts` LineChart
+- Reference: Grafana dashboard UI, IBM Carbon data density
 
 ## Change history
 
-- 2026-08-30: Tạo design_system.md (M3, v1.0.0) — chốt design tokens, toast spec, motion, accessibility.
+- 2026-09-05: Redesign v2.0.0 — switch sang IBM Plex, amber accent,
+  hex spec colors, lucide icons, recharts, 3 trang chính
+  (Dashboard / Gateway / PLC). Bỏ Geist/Inter/emoji glyphs/echarts.
+- 2026-08-30: Tạo design_system.md (M3, v1.0.0) — chốt design tokens,
+  toast spec, motion, accessibility.

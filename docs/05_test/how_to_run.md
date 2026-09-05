@@ -179,7 +179,7 @@ Click vào 1 card → navigate đến device detail với 5 tabs:
 | **Status** | kv grid: state, uptime_s, reason, last update |
 | **Events** | 100 events gần nhất với severity chip |
 | **Diag** | Latest diag row từ Postgres (poll_cycle_ms, tx_packets, ...) |
-| **Info** | Master metadata từ `info` payload (placeholder nếu chưa có) |
+| **Info** | Gateway metadata từ `info` payload (placeholder nếu chưa có) |
 
 ### 4.3. Events (`/events`)
 Bảng event feed với filter:

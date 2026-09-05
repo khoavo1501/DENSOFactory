@@ -10,7 +10,7 @@ version: 1.0.0
 
 # Test Report — M6 (Real Integration & Switch)
 
-> Mục tiêu: verify pipeline end-to-end với master thật + simulator, switch source mượt, LWT, negative tests, performance.
+> Mục tiêu: verify pipeline end-to-end với gateway thật + simulator, switch source mượt, LWT, negative tests, performance.
 
 ## 1. Phạm vi
 
@@ -28,11 +28,11 @@ version: 1.0.0
 ## 2. Kết quả test cases
 
 ### TC1 — E2E multi-device qua simulator
-**Mục tiêu:** 3 SIM devices từ simulator + 1 REAL device từ master script.
+**Mục tiêu:** 3 SIM devices từ simulator + 1 REAL device từ gateway script.
 
 **Bước:**
 1. Start simulator (`SIM_LINE_A_01`, `SIM_LINE_A_02`, `SIM_LINE_B_01`).
-2. Publish từ "master" Python script: status (online, retain), telemetry (3 registers), event (critical, SLAVE_COMM_LOST).
+2. Publish từ "gateway" Python script: status (online, retain), telemetry (3 registers), event (critical, PLC_COMM_LOST).
 3. Query `GET /api/devices` và `GET /api/events?severity=critical`.
 
 **Kết quả:**
@@ -43,7 +43,7 @@ SIM_LINE_A_01    simulated    online
 SIM_LINE_A_02    simulated    online
 SIM_LINE_B_01    simulated    online
 
-events: 1 critical (SLAVE_COMM_LOST @ GW_LINE_A_01)
+events: 1 critical (PLC_COMM_LOST @ GW_LINE_A_01)
 ```
 
 **Verdict:** ✅ PASS
@@ -70,7 +70,7 @@ Telemetry history after 3 switches: 1 points (intact)
 **Verdict:** ✅ PASS
 
 ### TC3 — LWT behavior
-**Mục tiêu:** Master mất kết nối đột ngột → state chuyển sang `offline`, `ts=0` được replace bằng server time.
+**Mục tiêu:** Gateway mất kết nối đột ngột → state chuyển sang `offline`, `ts=0` được replace bằng server time.
 
 **Bước:**
 1. Publish LWT: `ts=0, state=offline, reason=unexpected_disconnect`.

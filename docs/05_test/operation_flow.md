@@ -10,14 +10,14 @@ version: 1.0.0
 
 # Operation Flow Report — IIoT Gateway v0.9.0
 
-> Báo cáo luồng hoạt động end-to-end của dự án: từ master (STM32+W5500) đọc dữ liệu Modbus đến operator xem realtime trên webapp.
+> Báo cáo luồng hoạt động end-to-end của dự án: từ gateway (STM32+W5500) đọc dữ liệu Modbus đến operator xem realtime trên webapp.
 > Mục tiêu: giúp user/QA/operator hiểu rõ **luồng dữ liệu đi đâu**, **ai xử lý gì**, **khi nào persist**, **khi nào broadcast**.
 
 ## 1. Tổng quan kiến trúc
 
 ```
 ┌────────────┐  RS-485/Modbus RTU  ┌──────────────┐
-│   PLCs /   │ ─────────────────► │   Master     │
+│   PLCs /   │ ─────────────────► │   Gateway    │
 │  Sensors   │                     │ STM32 + W5500│
 └────────────┘                     └──────┬───────┘
                                         │ MQTT publish
@@ -201,10 +201,10 @@ Browser                              Backend
   │  WebSocket open                    │
 ```
 
-**Đồng thời, master (giả lập) publish telemetry:**
+**Đồng thời, gateway (giả lập) publish telemetry:**
 
 ```
-Master (or simulator)              EMQX               Backend
+Gateway (or simulator)              EMQX               Backend
   │                                  │                   │
   │  PUBLISH devices/GW_LINE_A_01/  │                   │
   │         telemetry                │                   │
@@ -276,12 +276,12 @@ Browser                              Backend
 ### Bước 5: Critical event → Toast + sound
 
 ```
-Simulator (or master)            EMQX           Backend                  Browser
+Simulator (or gateway)            EMQX           Backend                  Browser
   │                                │              │                          │
   │  PUBLISH devices/X/event       │              │                          │
   │  {                             │              │                          │
   │   events: [{                  │              │                          │
-  │     code: SLAVE_COMM_LOST,     │              │                          │
+  │     code: PLC_COMM_LOST,     │              │                          │
   │     severity: "critical"       │              │                          │
   │   }]                           │              │                          │
   ├────────────────────────────────►│              │                          │
@@ -411,9 +411,9 @@ POST /api/admin/users {username, password, role}
 
 ## 5. Luồng xử lý sự cố
 
-### 5.1 Master mất kết nối (LWT)
+### 5.1 Gateway mất kết nối (LWT)
 ```
-Master disconnect unexpectedly
+Gateway disconnect unexpectedly
   → EMQX publishes LWT (devices/{id}/status, ts=0, state=offline, reason=...)
   → Backend consumer: schema validate OK
   → dispatch.handle_status: ts=0 → replaced with _now()
@@ -425,7 +425,7 @@ Master disconnect unexpectedly
 
 ### 5.2 Payload invalid (key sai format)
 ```
-Master publishes {temperature: 30} (key không match pattern)
+Gateway publishes {temperature: 30} (key không match pattern)
   → Backend consumer: schema validate FAILED
   → log warning "schema validation failed ... drop"
   → KHÔNG ghi InfluxDB
@@ -478,7 +478,7 @@ Admin PUT /api/admin/devices-sources/{id} {source: "simulated"}
 | Telemetry (1 point/register) | InfluxDB `device_telemetry` | 30d | (device_id, register, _time) |
 | Status | InfluxDB `device_status` | 30d | (device_id, _time) |
 | Event | InfluxDB `device_event` | 30d | (device_id, severity, code, _time) |
-| Diag (per-slave) | Postgres `device_diag` | 90d (config) | PK (device_id, ts) |
+| Diag (per-PLC) | Postgres `device_diag` | 90d (config) | PK (device_id, ts) |
 | User | Postgres `users` | forever | PK username |
 | Source mapping | Postgres `device_sources` | forever | PK device_id |
 | Audit log | Postgres `audit_log` | 365d (config) | (ts) |
@@ -501,7 +501,7 @@ Admin PUT /api/admin/devices-sources/{id} {source: "simulated"}
 
 ## 9. Tóm tắt — 1 dòng
 
-**Dữ liệu từ Modbus → Master (STM32) → MQTT → EMQX → Backend (FastAPI) → InfluxDB/Postgres + WebSocket → nginx → React SPA → Operator browser**, với **Redis pub/sub** cho multi-instance horizontal scale (M9).
+**Dữ liệu từ Modbus → Gateway (STM32) → MQTT → EMQX → Backend (FastAPI) → InfluxDB/Postgres + WebSocket → nginx → React SPA → Operator browser**, với **Redis pub/sub** cho multi-instance horizontal scale (M9).
 
 ## 10. Cách sử dụng tài liệu này
 

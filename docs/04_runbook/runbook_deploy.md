@@ -87,7 +87,7 @@ curl -sI http://localhost:5173/         # webapp
 ## 5. Bảo mật
 
 - **HTTPS**: bắt buộc ở production. Set `COOKIE_SECURE=true`. Dùng nginx (không phải container nginx trong compose) terminate SSL hoặc thêm reverse proxy (Caddy/Traefik).
-- **Network isolation**: Postgres + InfluxDB chỉ listen trên internal Docker network. EMQX 1883 expose qua firewall (chỉ mở cho master gateway IP).
+- **Network isolation**: Postgres + InfluxDB chỉ listen trên internal Docker network. EMQX 1883 expose qua firewall (chỉ mở cho gateway IP).
 - **CORS**: chỉ allow frontend domain,vd `CORS_ORIGINS=https://iigw.example.com`.
 - **Rate limit**: login/refresh đã có sẵn (5/min và 30/min per IP, D-44).
 - **CSRF**: double-submit cookie đã bật (D-16).
@@ -205,7 +205,7 @@ Mặc định stack chạy 1 instance mỗi service. Khi vượt 15-30 device:
 | Backend down | API 5xx, WS disconnect | `docker compose restart backend`; check logs |
 | Postgres corrupt | DB connection fail | Restore từ backup (mục 7.1) |
 | InfluxDB OOM | Container restart loop | Tăng memory limit, giảm retention |
-| MQTT broker down | No new telemetry | `docker compose restart emqx`; check master gateway |
+| MQTT broker down | No new telemetry | `docker compose restart emqx`; check gateway |
 | Disk full | Container write fail | Clean old chunks (`influx delete`), check logrotate |
 
 ## 11. Quick reference

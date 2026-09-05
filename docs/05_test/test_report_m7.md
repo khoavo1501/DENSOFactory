@@ -48,7 +48,7 @@ Production index.html gzip ước tính ~1 KB.
 ### 3.1. Setup
 - Stack: postgres + influxdb + emqx + backend + webapp.
 - Simulator: profile `with-simulator` bật, 3 SIM devices (`SIM_LINE_A_01`, `SIM_LINE_A_02`, `SIM_LINE_B_01`).
-- Thêm 1 master "thật" (Python publish từ container backend) publish telemetry @ 1Hz trong 10 phút, status update 30s.
+- Thêm 1 gateway "thật" (Python publish từ container backend) publish telemetry @ 1Hz trong 10 phút, status update 30s.
 - Quan sát qua: API calls, WS messages, DB writes, container logs.
 
 ### 3.2. Kết quả (chạy 1h, smoke test cục bộ)

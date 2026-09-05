@@ -50,7 +50,7 @@ version: 1.1.0
 | # | AC | Pass/Fail | Cách verify | Nguồn |
 |---|---|---|---|---|
 | 3.1 | Simulator publish 3 device → backend consumer ghi vào InfluxDB | ☐ | `make start-simulator` + `influx query '...count()'` | M1, M6 |
-| 3.2 | Master "thật" publish → tương tự simulator | ☐ | Run script ở mục 9 test_checklist.md | M6 |
+| 3.2 | Gateway "thật" publish → tương tự simulator | ☐ | Run script ở mục 9 test_checklist.md | M6 |
 | 3.3 | Pattern inference: `GW_LINE_A_01` → real, `SIM_*` → simulated | ☐ | `GET /api/devices` | M1 |
 | 3.4 | LWT (ts=0, state=offline) → state hiển thị offline | ☐ | Publish LWT → `GET /api/devices/{id}/latest` show offline | M6 |
 | 3.5 | Negative payload (key sai, registers rỗng, reason=null, code ngoài enum) bị drop | ☐ | `docker compose logs backend \| grep "drop"` | M6 |

@@ -5,14 +5,16 @@ owner: project_lead
 created: 2026-08-30
 updated: 2026-08-30
 status: approved
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Plan Overview
 
 ## 1. Mục tiêu
 
-Xây dựng phần **webapp / dashboard** cho hệ thống Gateway IIoT giá rẻ, kết nối PLC/thiết bị công nghiệp đời cũ (RS-485/Modbus RTU) lên server thông qua Master (STM32 + W5500) publish dữ liệu qua **MQTT**.
+Xây dựng phần **webapp / dashboard** cho hệ thống Gateway IIoT giá rẻ, kết nối PLC/thiết bị công nghiệp đời cũ (RS-485/Modbus RTU) lên server thông qua Gateway (STM32 + W5500) publish dữ liệu qua **MQTT**.
+
+> **Vocabulary**: "gateway" = STM32+W5500 (trước đây gọi "master"); "PLC" = Modbus slave (trước đây gọi "slave"). Xem [Payload Spec v1](../99_attachments/payload_spec_v1.md) mục vocabulary.
 
 Backend/hạ tầng dữ liệu đã có:
 - MQTT broker (EMQX), topic `devices/{device_id}/{category}` với 5 loại: `telemetry`, `status`, `event`, `info`, `diag`.
@@ -27,13 +29,13 @@ Backend/hạ tầng dữ liệu đã có:
 1. Dashboard tổng (Overview): danh sách device, badge trạng thái, badge nguồn, chỉ số nhanh.
 2. Device Detail: register grid, line chart lịch sử, events, diag, info.
 3. Event / Alarm Log: bảng, lọc theo `severity`/`code`/device/time, phân trang.
-4. Diagnostics / Health: diag gần nhất + per-slave stats.
+4. Diagnostics / Health: diag gần nhất + per-PLC stats.
 5. Settings / Admin: toggle Simulator, mapping `device_id ↔ source`, export.
 6. Realtime qua WebSocket.
 7. Source indicator rõ ràng (`simulated` vs `real`).
 
 ### 2.2 Out-of-scope (phase này)
-- Điều khiển ngược xuống master (firmware update, config push).
+- Điều khiển ngược xuống gateway (firmware update, config push).
 - Multi-role auth phức tạp (chỉ `admin` + `viewer`).
 - Lưu trữ dài hạn / archive InfluxDB (do hạ tầng hiện hữu đã lo).
 - Mobile-first responsive nâng cao.
@@ -70,7 +72,7 @@ Backend/hạ tầng dữ liệu đã có:
 | **M3** | Chốt UI/UX concept | Design tokens; component inventory; layout shell; realtime rules; `docs/02_design/design_system.md`; wireframes | Wireframe + design system được duyệt |
 | **M4** | Áp style + Device Detail | Trang `/devices/:id` đầy đủ tabs; uPlot + ECharts gauge; TimeRangePicker; responsive tablet | Mở 1 device xem chart 24h ≤ 3s; tablet 1024×768 dùng được |
 | **M5** | Event/Alarm + Settings + Export | Trang `/events` với filter; ToastStack + ack; trang `/settings` 3 panel; export buttons | Filter critical-only đúng; Start/Stop simulator phản ánh trong vài giây; CSV mở được bằng Excel |
-| **M6** | Tích hợp Real + switch | E2E master thật; song song 5 sim + 10 real; test LWT, mapping đổi runtime, source_changed WS; `docs/04_runbook/runbook_deploy.md` | Checklist case đạt 100% |
+| **M6** | Tích hợp Real + switch | E2E gateway thật; song song 5 sim + 10 real; test LWT, mapping đổi runtime, source_changed WS; `docs/04_runbook/runbook_deploy.md` | Checklist case đạt 100% |
 | **M7** | Test & Polish | Chạy TC-S*, TC-SW*, TC-P*; Lighthouse desktop ≥ 90; `docs/05_test/test_report_phase*.md`; `docs/06_changelog/CHANGELOG_webapp.md` đến v0.x | Mọi DoD đạt; demo ổn định 1h liên tục với 15 device |
 | **M9** | Multi-instance backend (Redis pub/sub) | Redis service; `RedisBus`; rate limit qua Redis ZSET; profile `multi-instance` với `backend2`; cross-instance WS broadcast | backend1 publish → backend2 nhận qua Redis; rate limit shared; 25/25 tests vẫn pass |
 
@@ -95,3 +97,4 @@ Backend/hạ tầng dữ liệu đã có:
 - 2026-08-30: Tạo plan_overview.md (M0).
 - 2026-08-30: Bump lên v1.0.0 — đánh dấu toàn bộ M0–M7 hoàn tất; liệt kê deliverables, known limitations ở `docs/05_test/test_report_m7.md`.
 - 2026-09-01: Bump lên v1.1.0 — thêm M9 (multi-instance Redis pub/sub).
+- 2026-09-05: Bump lên v1.2.0 — vocabulary rename: "master" → "gateway", "slave" → "PLC"; đồng bộ với payload spec v1.1.

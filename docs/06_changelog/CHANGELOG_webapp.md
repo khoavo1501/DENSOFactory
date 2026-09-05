@@ -3,9 +3,9 @@ title: Webapp Changelog
 category: changelog
 owner: project_lead
 created: 2026-08-30
-updated: 2026-08-30
+updated: 2026-09-05
 status: approved
-version: 0.9.0
+version: 0.9.1
 ---
 
 # Webapp Changelog
@@ -14,6 +14,51 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 Định dạng theo [keep-a-changelog](https://keepachangelog.com/vi-VN/1.1.0/).
 
 ## [Unreleased]
+
+## [0.9.1] - 2026-09-05
+
+### Added
+- **Backend M10**: Gateway/PLC hierarchy endpoints
+  (`/api/gateways`, `/api/gateways/{id}`, `/api/plcs`, `/api/plcs/unpaired`,
+  `/api/plcs/{id}`, `/api/plcs/{id}/pair`, `/api/plcs/{id}/history`,
+  `/api/warnings`).
+- **Backend M10**: SQLAlchemy models cho `gateways`, `plcs`,
+  `plc_snapshots`, `plc_assignments`, `warnings` map đúng schema DB
+  thật (Postgres volume đã có sẵn).
+- **Backend M10**: alembic migration `0002_m10_plc` (no-op, chỉ stamp
+  version vì tables đã tồn tại từ session trước).
+- **Backend M10**: MQTT consumer tự động upsert Gateway + PLC + insert
+  `plc_snapshots` mỗi telemetry, ghi `warnings` cho events warning/critical.
+- **Webapp redesign v2.0.0**: 3 trang chính (Dashboard, Gateway, PLC
+  Detail) theo brief — IBM Plex Sans/Mono, amber `#E0973B` accent,
+  lucide icons, recharts LineChart.
+- **Webapp**: Sidebar 220px always-visible (thay icon rail hover).
+- **Webapp**: Breadcrumb drill-down Dashboard / Gateway / PLC.
+- **Webapp**: Stat cards (3) + Gateway grid với hover lift.
+- **Webapp**: PLC Detail với 3 chart time-series (temp / RPM / current)
+  + offline empty state.
+- **Webapp**: Skeleton loaders + empty/error states cho mọi async data.
+- **Docs**: api_reference v0.3.0 (M10 endpoints), erd_postgres v0.2.0
+  (M10 tables), design_system v2.0.0, wireframes v2.0.0.
+
+### Changed
+- **Webapp**: Token Inter + Geist → **IBM Plex Sans + IBM Plex Mono**
+  theo brief.
+- **Webapp**: Blue accent `#3b82f6` → **amber `#e0973b`** theo brief.
+- **Webapp**: Background `#0f1419` → **`#0d1117`**, panel
+  `#1a212b` → **`#151b23`** theo brief hex spec.
+- **Webapp**: ECharts gauge → **recharts LineChart** (không dùng gauge
+  nữa, hiển thị value trực tiếp trong info header).
+- **Webapp**: uPlot time-series → **recharts LineChart** với custom
+  tooltip, grid dashed, axis từ CSS variables.
+- **Webapp**: ECharts/uPlot packages removed; `lucide-react` + `recharts`
+  added.
+- **Backend**: `app.schemas.common.PLCSnapshot` model_validate phải
+  dùng dict (không thể từ ORM class do name shadow với Pydantic schema).
+
+### Fixed
+- Login trả HTTP 500 do webapp container serve build cũ; rebuild + restart
+  + alembic stamp `0001_initial` thủ công để fix migration state lệch.
 
 ## [0.9.0] - 2026-09-01
 
@@ -45,7 +90,7 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 
 ### Added
 - M6: Test Report (`docs/05_test/test_report_m6.md`) — 7 test cases (E2E, switch, LWT, negative, source_changed WS, session refresh, performance).
-- M6: Real integration verified end-to-end với master "thật" (Python publish từ container backend) + simulator (3 SIM devices).
+- M6: Real integration verified end-to-end với gateway "thật" (Python publish từ container backend) + simulator (3 SIM devices).
 
 ### Fixed
 - **InfluxDB LWT timestamp bug**: consumer dùng `payload["ts"]` gốc (=0 cho LWT), points rơi vào epoch 1970. Fix: replace `ts<=0` bằng `_now()` trước khi ghi Influx.
@@ -89,7 +134,7 @@ Lịch sử thay đổi của phần webapp/dashboard cho hệ thống Gateway I
 - M4: Status tab — kv grid hiển thị state/uptime/reason/last update.
 - M4: Events tab trong Device Detail — list 100 event gần nhất, severity chip.
 - M4: Diag tab — latest diag row từ Postgres với kv grid.
-- M4: Info tab — placeholder cho master metadata (info payload, live only per spec mục 7.2).
+- M4: Info tab — placeholder cho gateway metadata (info payload, live only per spec mục 8.2).
 - M4: Events page — time range picker + code multi-select filter (top 13 codes từ enum đóng).
 - M4: Responsive tablet (1024-1279) — gauge -20% size, telemetry-grid collapses to 1 column.
 - M4: New dependencies: `uplot` 1.6.31, `echarts` 5.5.1, `echarts-for-react` 3.0.2.

@@ -124,10 +124,10 @@ version: 0.1.0
   "ts": 1692816000,
   "events": [
     {
-      "code": "SLAVE_COMM_LOST",
+      "code": "PLC_COMM_LOST",
       "severity": "critical",
-      "message": "Slave 3 timeout after 3 retries",
-      "source": "slave:3",
+      "message": "PLC 3 timeout after 3 retries",
+      "source": "plc:3",
       "context": { "last_seen_ts": 1692815900, "retries": 3 }
     }
   ]

@@ -153,7 +153,7 @@ c.publish('devices/TEST_PIPE_01/telemetry', json.dumps({
 # 9.3: event critical
 c.publish('devices/TEST_PIPE_01/event', json.dumps({
     'device_id':'TEST_PIPE_01','ts':int(time.time()),'type':'event',
-    'events':[{'code':'SLAVE_COMM_LOST','severity':'critical','message':'Slave 3 timeout','source':'slave:3'}]
+    'events':[{'code':'PLC_COMM_LOST','severity':'critical','message':'PLC 3 timeout','source':'plc:3'}]
 }), qos=1)
 
 c.disconnect()

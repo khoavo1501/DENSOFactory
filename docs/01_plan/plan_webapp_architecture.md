@@ -46,7 +46,7 @@ version: 0.1.0
 | `/` | Overview | Grid DeviceCard (4 cột desktop / 2 tablet); source filter; gauge + sparkline |
 | `/devices/:id` | Device Detail | Tabs: Telemetry / Status / Events / Diag / Info |
 | `/events` | Event/Alarm Log | Bảng + filter (severity/code/device/time); Toasts realtime |
-| `/diagnostics` | Diagnostics | Bảng tổng hợp diag; per-slave stats drawer |
+| `/diagnostics` | Diagnostics | Bảng tổng hợp diag; per-PLC stats drawer |
 | `/settings` | Settings/Admin | 3 panel: Simulator Service / Source Mapping / Export |
 
 ## 3. API endpoints (M1)

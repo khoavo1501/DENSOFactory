@@ -3,9 +3,9 @@ title: Architecture Decisions
 category: attachment
 owner: project_lead
 created: 2026-08-30
-updated: 2026-08-30
+updated: 2026-09-05
 status: approved
-version: 1.8.0
+version: 1.9.0
 ---
 
 # Architecture Decisions
@@ -24,6 +24,8 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - D-21 → D-30: Data & Backend (DB, env vars, file location, pattern inference)
 - D-31 → D-42: Operations + Docs & File Management (Docker, retention defaults, audit, export, cấu trúc docs, payload_spec move, version policy)
 - D-43 → D-46: Additions từ QA M1 review (idempotent logout, rate-limit, consumer fail-safe, test isolation)
+- D-47 → D-65: M2..M9 (frontend stack, websocket, toast, charts, exports, Redis, multi-instance)
+- D-66 → D-70: v2 redesign (M10 backend, IBM Plex, amber accent, lucide, recharts, 3 main pages)
 
 ---
 
@@ -70,7 +72,7 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 
 ## D-09 — Ngôn ngữ UI
 - **Quyết định:** Tiếng Anh (toàn bộ label/placeholder/error trong UI).
-- **Hệ quả:** Enum `state`/`severity`/`code` hiển thị tiếng Anh (vd. `online`, `critical`, `SLAVE_COMM_LOST`).
+- **Hệ quả:** Enum `state`/`severity`/`code` hiển thị tiếng Anh (vd. `online`, `critical`, `PLC_COMM_LOST`).
 
 ## D-10 — Mật độ thông tin
 - **Quyết định:** SCADA + HMI hiện đại.
@@ -318,7 +320,7 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 
 ## D-45 — MQTT consumer fail-safe
 - **Quyết định:** Consumer `aiomqtt` retry với exponential backoff (1s → 30s cap) khi mất kết nối broker; schema reload khi mtime đổi (không restart).
-- **Lý do:** Spec mục 7.1 yêu cầu "sửa master_protocol_v1.json có hiệu lực ngay, không cần restart backend". Lỗi mạng không nên crash app.
+- **Lý do:** Spec yêu cầu "sửa master_protocol_v1.json có hiệu lực ngay, không cần restart backend". Lỗi mạng không nên crash app.
 - **Hệ quả:** Backend chịu được broker down, schema hot-reload.
 
 ## D-46 — Test isolation
@@ -334,7 +336,7 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 ## D-59 — LWT timestamp replace (M6)
 - **Quyết định:** Trước khi ghi InfluxDB, nếu `payload["ts"] <= 0` thì replace bằng `_now()`.
 - **Lý do:** Spec mục 3.2 cho phép `ts=0` cho LWT để server tự fill. Nếu giữ ts=0, point rơi vào epoch 1970, query `range(start:-1h)` không thấy, frontend stale forever.
-- **Hệ quả:** LWT (master disconnect) → state=offline visible ngay trong API. WS broadcast đã có logic tương tự.
+- **Hệ quả:** LWT (gateway disconnect) → state=offline visible ngay trong API. WS broadcast đã có logic tương tự.
 
 ## D-60 — source_changed broadcast qua BackgroundTasks (M6)
 - **Quyết định:** Khi admin PUT/DELETE mapping, gọi `BackgroundTasks.add_task(async _broadcast_source_changed, ...)` thay vì gọi trực tiếp trong sync route.
@@ -485,6 +487,70 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - [Runbook Local Dev](./04_runbook/runbook_local_dev.md)
 - [CHANGELOG_webapp](./06_changelog/CHANGELOG_webapp.md)
 
+---
+
+# v2 Redesign (2026-09-05) — D-66 → D-70
+
+## D-66 · M10 backend reuse existing Postgres schema
+- **Quyết định:** Khi implement M10 API, **không** tạo lại schema mới
+  cho `gateways` / `plcs` / `plc_snapshots` / `plc_assignments` /
+  `warnings`. Thay vào đó, khảo sát schema đã có sẵn trong Postgres
+  volume (từ work trước đó) và map ORM models / Pydantic schemas khớp
+  với schema thật.
+- **Lý do:** Migration gốc `0002_m10_plc` bị xoá file, nhưng schema
+  tables đã được apply trực tiếp lên DB. Re-creating schema sẽ đụng
+  độ constraint + mất data test. Alembic migration mới (`0002_m10_plc`)
+  là no-op, chỉ advance version pointer.
+- **Hệ quả:** ORM models phải match schema thật (cột `status` không
+  phải `last_state` trên gateways; plcs có `operating_status`; warnings
+  có `cleared BIGINT` thay vì bool). Mất 1 vòng debug do tên shadow
+  Pydantic/ORM `PLCSnapshot` — fix bằng `from_attributes` + dict-based
+  `model_validate`.
+
+## D-67 · Backend 1-device-1-gateway model
+- **Quyết định:** Mỗi device_id trong simulator = 1 gateway = 1 PLC
+  (cùng id cho cả hai). Auto-pair qua `plc_assignments`.
+- **Lý do:** Simulator chỉ publish với `device_id` đơn (`SIM_LINE_A_01`
+  v.v.), không phân biệt gateway/PLC. Real deployments sẽ publish
+  với gateway_id + plc_id khác nhau; M10 schema hỗ trợ điều đó
+  (`plc_assignments` cho phép re-pair qua API).
+- **Hệ quả:** `/api/plcs/unpaired` trả `[]` cho simulator nhưng
+  endpoint đã wired sẵn cho deployment thật. Webapp hiển thị 1 PLC
+  per gateway card khi dùng simulator.
+
+## D-68 · Webapp stack: IBM Plex + amber + lucide + recharts
+- **Quyết định:** Theo brief operator: chuyển sang IBM Plex Sans/Mono,
+  amber accent `#E0973B`, lucide-react icons, recharts LineChart.
+  Bỏ Geist/Inter, ECharts gauge, uPlot, emoji glyphs.
+- **Lý do:** Brief từ stakeholder yêu cầu cụ thể. Brief ghi rõ hex
+  colors (#0D1117, #151B23, #E0973B, #39C58F, #DB5A5A) + font family.
+  Recharts nhẹ hơn echarts/uPlot (~12kb gzipped) và render React-native
+  (không cần Canvas init lifecycle).
+- **Hệ quả:** Bundle size giảm ~150KB. Render time chart đầu tiên
+  tăng nhẹ (recharts dùng SVG, ECharts dùng canvas) nhưng đủ nhanh
+  cho 3 charts per page.
+
+## D-69 · 3 main pages (Dashboard / Gateway / PLC) — no Settings yet
+- **Quyết định:** Phase đầu redesign giữ sidebar 1 link "Dashboard" +
+  3 trang chính (Dashboard, Gateway Detail, PLC Detail). Bỏ qua
+  Events / Diagnostics / Settings cho v2.0; thêm ở phase tiếp theo.
+- **Lý do:** Brief chỉ mô tả 3 trang drill-down. Tránh thêm trang
+  không có spec rõ ràng → thiết kế generic.
+- **Hệ quả:** Sidebar đơn giản, không có noise. Operator focus vào
+  drill-down 1-nhấp từ Dashboard → Gateway → PLC.
+
+## D-70 · Pydantic schema name shadow với SQLAlchemy model
+- **Quyết định:** Khi SQLAlchemy class và Pydantic class trùng tên
+  (ví dụ `PLCSnapshot`), import bằng alias: `from app.models import
+  PLCSnapshot as SnapshotModel`. Truy cập thuộc tính qua `getattr(...)`
+  trên instance, không qua class attribute (Pydantic v2 strict check).
+- **Lý do:** Pydantic v2 `model_validate(obj)` với `from_attributes=True`
+  yêu cầu `isinstance(obj, ModelClass)` hoặc dict. SQLAlchemy class
+  có cùng tên nhưng khác identity → fail. Validate qua dict
+  (`{col: getattr(row, col) for col in ...}`) tránh được.
+- **Hệ quả:** Khi thêm model mới trùng tên với Pydantic schema, dùng
+  alias ngay từ đầu.
+
 ## Change history
 
 - 2026-08-30: Tạo file DECISIONS.md (v1.0.0) — tổng hợp 42 quyết định từ 3 vòng hội thoại planning.
@@ -496,3 +562,4 @@ Khi một quyết định bị đảo, **KHÔNG xoá entry cũ** — thêm entry
 - 2026-08-30: Bump lên v1.6.0 — thêm D-59..D-60 từ M6 (LWT timestamp replace, source_changed broadcast via BackgroundTasks).
 - 2026-08-30: Bump lên v1.7.0 — thêm D-61..D-62 từ M7 (bundle size budget, project complete M0–M7).
 - 2026-08-30: Bump lên v1.8.0 — thêm D-63..D-65 từ M9 (Redis pub/sub, ZSET rate limit, multi-instance profile).
+- 2026-09-05: Bump lên v1.9.0 — thêm D-66..D-70 từ v2 redesign (M10 backend reuse schema, 1-device-1-gateway model, IBM Plex + lucide + recharts, 3 main pages, Pydantic/SQLAlchemy name shadow).

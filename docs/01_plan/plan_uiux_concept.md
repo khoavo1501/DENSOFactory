@@ -31,9 +31,9 @@ version: 0.2.0
 
 | Token | Dark | Light | Mục đích |
 |---|---|---|---|
-| `state.online` | #16a34a | #15803d | Master hoạt động bình thường |
+| `state.online` | #16a34a | #15803d | Gateway hoạt động bình thường |
 | `state.degraded` | #eab308 | #ca8a04 | Hoạt động một phần |
-| `state.error` | #dc2626 | #b91c1c | Master lỗi |
+| `state.error` | #dc2626 | #b91c1c | Gateway lỗi |
 | `state.offline` | #6b7280 | #4b5563 | Mất kết nối / LWT |
 | `severity.info` | #3b82f6 | #2563eb | Sự kiện thông tin |
 | `severity.warning` | #f97316 | #ea580c | Cảnh báo |
@@ -92,7 +92,7 @@ version: 0.2.0
 | `/` Overview | TopBar + grid `DeviceCard` (4 cột desktop / 2 tablet). Source filter. Click card → `/devices/:id`. |
 | `/devices/:id` | Header: tên, source badge, state dot, last_seen, action menu. Tabs: Telemetry (RegisterGrid + TimeSeriesChart), Status, Events, Diag, Info. |
 | `/events` | Top: filter bar (severity multi, code multi, device multi, time range). Body: EventTable. Toasts bật song song khi có event realtime. |
-| `/diagnostics` | Bảng tổng hợp diag. Click row → drawer per-slave stats. |
+| `/diagnostics` | Bảng tổng hợp diag. Click row → drawer per-PLC stats. |
 | `/settings` | 3 panel: Simulator Service (Start/Stop + status + log tail) / Source Mapping (bảng + bulk import CSV) / Export (buttons). |
 | `/login` | Form đơn giản, 2 role: admin / viewer. |
 

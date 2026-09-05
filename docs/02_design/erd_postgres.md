@@ -3,54 +3,101 @@ title: ERD Postgres
 category: design
 owner: project_lead
 created: 2026-08-30
-updated: 2026-08-30
+updated: 2026-09-05
 status: approved
-version: 0.1.0
+version: 0.2.0
 ---
 
 # ERD Postgres
 
-Postgres là DB chính cho: device_sources mapping, device_diag history, users, audit_log, revoked_refresh.
-Time-series (telemetry / status / event) vẫn ở InfluxDB — xem [Payload Spec v1](../99_attachments/payload_spec_v1.md) mục 7.2.
+Postgres là DB chính cho: device_sources mapping, device_diag history, users, audit_log, revoked_refresh, **và M10: gateways, plcs, plc_snapshots, plc_assignments, warnings**.
+Time-series gốc (telemetry / status / event) vẫn ở InfluxDB; M10 đọc thêm `plc_snapshots` (Postgres) cho live values — xem [Payload Spec v1](../99_attachments/payload_spec_v1.md) mục 7.2.
 
 ## Sơ đồ
 
 ```
-                  ┌──────────────────────┐
-                  │      device_sources  │
-                  │──────────────────────│
-                  │ PK device_id (TEXT)  │
-                  │    source (TEXT)     │
-                  │    updated_at (TZ)   │
-                  │    updated_by (TEXT) │
-                  └──────────┬───────────┘
-                             │
-                             │  (override pattern)
-                             ▼
-   ┌─────────────────┐   ┌──────────────────────┐
-   │      users      │   │     device_diag      │
-   │─────────────────│   │──────────────────────│
-   │ PK username     │   │ PK (device_id, ts)   │
-   │    password_hash│   │    poll_cycle_ms     │
-   │    role         │   │    uptime_s          │
-   │    created_at   │   │    tx_packets        │
-   └────────┬────────┘   │    tx_failures       │
-            │            │    mqtt_reconnect    │
-            │            │    avg_latency_ms    │
-            │            │    payload (JSONB)   │
-            │            └──────────────────────┘
-            │
-            ▼
-   ┌──────────────────────────────────┐    ┌────────────────────────┐
-   │           audit_log              │    │     revoked_refresh    │
-   │──────────────────────────────────│    │────────────────────────│
-   │ PK id (BIGSERIAL)                │    │ PK jti (TEXT)          │
-   │    ts (TZ)                       │    │    user_name (TEXT)    │
-   │    user_name (TEXT, nullable)    │◄───│    expires_at (TZ)     │
-   │    action (TEXT)                 │    │    revoked_at (TZ)     │
-   │    target (TEXT, nullable)       │    └────────────────────────┘
-   │    detail (JSONB, nullable)      │
-   └──────────────────────────────────┘
+                   ┌──────────────────────┐
+                   │      device_sources  │
+                   │──────────────────────│
+                   │ PK device_id (TEXT)  │
+                   │    source (TEXT)     │
+                   │    updated_at (TZ)   │
+                   │    updated_by (TEXT) │
+                   └──────────┬───────────┘
+                              │
+                              │  (override pattern)
+                              ▼
+    ┌─────────────────┐   ┌──────────────────────┐
+    │      users      │   │     device_diag      │
+    │─────────────────│   │──────────────────────│
+    │ PK username     │   │ PK (device_id, ts)   │
+    │    password_hash│   │    poll_cycle_ms     │
+    │    role         │   │    uptime_s          │
+    │    created_at   │   │    tx_packets        │
+    └────────┬────────┘   │    tx_failures       │
+             │            │    mqtt_reconnect    │
+             │            │    avg_latency_ms    │
+             │            │    payload (JSONB)   │
+             │            └──────────────────────┘
+             │
+             ▼
+    ┌──────────────────────────────────┐    ┌────────────────────────┐
+    │           audit_log              │    │     revoked_refresh    │
+    │──────────────────────────────────│    │────────────────────────│
+    │ PK id (BIGSERIAL)                │    │ PK jti (TEXT)          │
+    │    ts (TZ)                       │    │    user_name (TEXT)    │
+    │    user_name (TEXT, nullable)    │◄───│    expires_at (TZ)     │
+    │    action (TEXT)                 │    │    revoked_at (TZ)     │
+    │    target (TEXT, nullable)       │    └────────────────────────┘
+    │    detail (JSONB, nullable)      │
+    └──────────────────────────────────┘
+
+
+## M10: Gateway / PLC hierarchy (added 2026-09-05)
+
+    ┌────────────────────────┐         ┌────────────────────────┐
+    │       gateways         │ 1     N │          plcs          │
+    │────────────────────────│─────────│────────────────────────│
+    │ PK gateway_id (TEXT)   │         │ PK plc_id (TEXT)       │
+    │    name (TEXT, NOT NUL)│         │ FK gateway_id (TEXT)  │
+    │    status (TEXT, NOT N)│         │    name (TEXT)         │
+    │    fw_version (TEXT)   │         │    operating_status    │
+    │    ip (TEXT)           │         │    status (TEXT)       │
+    │    last_seen_ts (INT)  │         │    last_seen_ts (INT)  │
+    │    created_at (TZ)     │         │    created_at (TZ)     │
+    └──────────┬─────────────┘         └──────────┬─────────────┘
+               │ 1                                 │ 1
+               │                                   │
+               │ N                                 │ N
+               ▼                                   ▼
+    ┌────────────────────────┐         ┌────────────────────────┐
+    │   plc_assignments       │         │     plc_snapshots      │
+    │────────────────────────│         │────────────────────────│
+    │ PK id (BIGSERIAL)       │         │ PK id (BIGSERIAL)     │
+    │ FK plc_id (TEXT, UNIQUE)│         │ FK plc_id (TEXT)      │
+    │ FK gateway_id (TEXT)    │         │    gateway_id (TEXT)  │
+    │    created_at (TZ)      │         │    ts (BIGINT)         │
+    └────────────────────────┘         │    temperature (FLOAT) │
+                                       │    rpm (FLOAT)         │
+                                       │    current_amp (FLOAT) │
+                                       │    heartbeat (BIGINT)  │
+                                       │    operating_status    │
+                                       │    status (TEXT)       │
+                                       │    mode (TEXT)         │
+                                       └────────────────────────┘
+
+    ┌────────────────────────┐
+    │       warnings         │
+    │────────────────────────│
+    │ PK id (BIGSERIAL)      │
+    │    target_type (TEXT)  │  -- 'gateway' | 'plc'
+    │    target_id (TEXT)    │
+    │    severity (TEXT)     │  -- 'info' | 'warning' | 'critical'
+    │    code (TEXT)         │
+    │    message (TEXT)      │
+    │    ts (BIGINT)         │
+    │    cleared (BIGINT)    │  -- 0 = active, non-zero = cleared ts
+    └────────────────────────┘
 ```
 
 ## Bảng chi tiết
@@ -89,6 +136,42 @@ Blacklist refresh token JTI sau logout.
 - Index: `idx_revoked_expires (expires_at)`.
 - Retention: `REVOKED_TOKEN_RETENTION_DAYS` (config-driven, default 30).
 
+### gateways (M10)
+Một gateway (STM32 + W5500) sở hữu N PLC. `gateway_id` PK khớp với segment `devices/{gateway_id}/...` của MQTT topic (giá trị này cũng chính là envelope field `device_id`).
+- `status` CHECK IN `('online','offline','error')`.
+- `last_seen_ts` được refresh mỗi message telemetry/status từ device.
+- Tự động upsert bởi MQTT consumer (`backend/app/services/gateways.py::touch_for_message`).
+
+### plcs (M10)
+Một PLC (Programmable Logic Controller) báo cáo về một gateway.
+- PK `plc_id` TEXT, FK `gateway_id → gateways.gateway_id` ON DELETE CASCADE.
+- `operating_status` CHECK IN `('running','stopped')` — set bởi consumer dựa trên bool register values.
+- `status` CHECK IN `('online','offline','error')`.
+- Mỗi gateway có ít nhất 1 PLC (simulator model: 1 gateway == 1 PLC, cùng id).
+
+### plc_snapshots (M10)
+Time-series bảng snapshot trực tiếp từ telemetry, dùng cho webapp realtime.
+- FK `plc_id → plcs.plc_id` ON DELETE CASCADE.
+- `temperature` (FLOAT) — đã nhân scale 0.1°C từ raw `hr_100`.
+- `rpm` (FLOAT) — raw `hr_101`.
+- `current_amp` (FLOAT) — đã nhân scale 0.1A từ `co_0`.
+- `heartbeat` (BIGINT) — raw `di_300`.
+- `mode` CHECK IN `('normal','realtime')` — dùng để webapp highlight PLC cảnh báo.
+- Index: `ix_plc_snapshots_plc_ts (plc_id, ts)`.
+
+### plc_assignments (M10)
+Gán PLC sang gateway (operator action).
+- UNIQUE `plc_id` — mỗi PLC thuộc đúng 1 gateway tại một thời điểm.
+- Re-pair xóa row cũ và insert row mới qua API `POST /api/plcs/{id}/pair`.
+
+### warnings (M10)
+Cảnh báo đang active hoặc đã clear, gắn với gateway hoặc PLC.
+- `target_type` CHECK IN `('plc','gateway')`.
+- `severity` CHECK IN `('info','warning','critical')`.
+- `cleared` BIGINT — 0 = active, non-zero = Unix timestamp lúc clear.
+- Consumer insert row khi nhận event với `severity ∈ ('warning','critical')`.
+- Index: `ix_warnings_target (target_type, target_id)`, `ix_warnings_ts (ts)`.
+
 ## Quan hệ (logical)
 
 - `device_sources.device_id` ↔ Telemetry/Status/Event tag `device_id` (InfluxDB, không có FK cứng vì khác DB engine).
@@ -118,4 +201,6 @@ Job cleanup chạy nightly bằng APScheduler (`CLEANUP_CRON_HOUR`, default 2). 
 
 ## Change history
 
+- 2026-09-05: Bổ sung M10 tables (gateways, plcs, plc_snapshots,
+  plc_assignments, warnings) vào v0.2.0.
 - 2026-08-30: Tạo ERD Postgres cho M1 (v0.1.0).

@@ -1,10 +1,16 @@
-# SPEC PAYLOAD: Dữ liệu Master gửi lên Server (Protocol v1)
+# SPEC PAYLOAD: Dữ liệu Gateway gửi lên Server (Protocol v1)
 
-> Tài liệu tham chiếu chi tiết về **định dạng payload** mà master (STM32 + W5500) publish lên broker MQTT.
-> Phạm vi: payload + quy tắc validate. Về kết nối MQTT, topic, QoS, boot sequence xem `docs/master_integration_spec.md`.
-> Nguồn chân lý duy nhất về schema: `backend/master_protocol_v1.json` (JSON Schema draft 2020-12).
-> Implementation mẫu đầy đủ: `simulator/simulator.py`.
-> Đối tượng: lập trình viên firmware master và lập trình viên backend/server.
+> Tài liệu tham chiếu chi tiết về **định dạng payload** mà gateway (STM32 + W5500) publish lên broker MQTT.
+> Về kết nối MQTT, topic, QoS, boot sequence xem [`docs/02_design/master_integration_spec.md`](../02_design/master_integration_spec.md).
+> Nguồn chân lý duy nhất về schema: [`backend/master_protocol_v1.json`](../../backend/master_protocol_v1.json) (file name giữ cho tương thích; nội dung đã cập nhật theo convention `gateway` / `plc`).
+> Implementation mẫu đầy đủ: [`simulator/simulator.py`](../../simulator/simulator.py).
+> Đối tượng: lập trình viên firmware gateway và lập trình viên backend/server.
+
+> **Quy ước vocabulary** (áp dụng cho toàn bộ tài liệu):
+> - **gateway**: thiết bị STM32 + W5500 kết nối mạng, đọc dữ liệu từ các PLC qua RS-485/Modbus RTU (trước đây gọi là "master" trong các tài liệu cũ).
+> - **plc**: thiết bị Modbus slave được gateway đọc (trước đây gọi là "slave").
+> - **`device_id`**: id duy nhất của gateway, xuất hiện trong topic `devices/{device_id}/...`. Khi gateway có nhiều PLC, id này là id của gateway.
+> - **`plc_id`**: id của một PLC cụ thể dưới gateway. Khi simulator publish, mỗi `device_id` đồng thời là `gateway_id` và `plc_id` (xem D-67).
 
 ---
 
@@ -14,11 +20,12 @@
 2. [telemetry](#2-telemetry--devicesidtelemetry)
 3. [status](#3-status--devicesidstatus)
 4. [event](#4-event--devicesidevent)
-5. [info](#5-info--devicesidinfo)
-6. [diag](#6-diag--devicesiddiag)
-7. [Validation & hành vi server](#7-validation--hành-vi-server)
-8. [Giới hạn & ngân sách khuyến nghị](#8-giới-hạn--ngân-sách-khuyến-nghị)
-9. [Tự test payload](#9-tự-test-payload)
+6. [info](#6-info--devicesidinfo)
+7. [diag](#7-diag--devicesiddiag)
+8. [Validation & hành vi server](#8-validation--hành-vi-server)
+9. [Giới hạn & ngân sách khuyến nghị](#9-giới-hạn--ngân-sách-khuyến-nghị)
+10. [Tự test payload](#10-tự-test-payload)
+11. [Migration từ protocol "master/slave" cũ](#11-migration-từ-protocol-masterslave-cũ)
 
 ---
 
@@ -26,13 +33,13 @@
 
 - Payload là **một đối tượng JSON duy nhất**, mã hóa **UTF-8**, không nén. Khuyến nghị dạng compact (không xuống dòng/thụt lề) để tiết kiệm băng thông.
 - Mọi message đều nằm trong **envelope chung** (xem 1.1). Các trường không định nghĩa trong schema sẽ bị backend **bỏ qua**, nhưng **không khuyến khích** gửi để giữ tương thích về sau.
-- File schema được backend **đọc lại ở mỗi message** (`backend/app/mqtt_consumer.py:validate_payload`) → sửa `master_protocol_v1.json` (volume mount) có hiệu lực **ngay**, không cần restart backend.
+- File schema được backend **đọc lại ở mỗi message** (`backend/app/mqtt/consumer.py:_on_message`) → sửa `master_protocol_v1.json` (volume mount) có hiệu lực **ngay**, không cần restart backend.
 
 ### 1.1 Envelope (BẮT BUỘC trong mọi message)
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Mô tả |
 |---|---|---|---|---|
-| `device_id` | string | ✅ | regex `^[A-Za-z0-9_-]{1,64}$` | ID duy nhất của master. Phải **khớp chính xác** với phần `{device_id}` trong topic |
+| `device_id` | string | ✅ | regex `^[A-Za-z0-9_-]{1,64}$` | ID duy nhất của gateway. Phải **khớp chính xác** với phần `{device_id}` trong topic |
 | `ts` | integer | ✅ | ≥ 0 | Unix timestamp **giây, UTC**. Sync bằng NTP/RTC. Chỉ chấp nhận `0` cho payload LWT (server tự thay bằng thời điểm nhận) |
 | `type` | string | ✅ | enum: `telemetry` \| `status` \| `event` \| `info` \| `diag` | Phải **trùng với category trên topic** |
 
@@ -58,7 +65,7 @@
 
 ## 2. telemetry → `devices/{id}/telemetry`
 
-Dữ liệu cảm biến/tiến trình đọc từ các Modbus slave, publish đều đặn.
+Dữ liệu cảm biến/tiến trình đọc từ các PLC (Modbus slave), publish đều đặn.
 
 ```json
 {
@@ -117,7 +124,7 @@ Quy tắc giá trị:
 
 ## 3. status → `devices/{id}/status`
 
-Heartbeat + trạng thái master. Cũng là payload của **LWT**.
+Heartbeat + trạng thái gateway. Cũng là payload của **LWT**.
 
 ```json
 {
@@ -133,7 +140,7 @@ Heartbeat + trạng thái master. Cũng là payload của **LWT**.
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Mô tả |
 |---|---|---|---|---|
-| `state` | string | ✅ | enum: `online` \| `offline` \| `error` \| `degraded` | Trạng thái master |
+| `state` | string | ✅ | enum: `online` \| `offline` \| `error` \| `degraded` | Trạng thái gateway |
 | `uptime_s` | integer | ❌ | ≥ 0 | Số giây kể từ lần reset gần nhất. Thiếu → server coi là 0 |
 | `reason` | string | ❌ | ≤ 256 ký tự | Lý do/mô tả thêm |
 
@@ -142,13 +149,13 @@ Heartbeat + trạng thái master. Cũng là payload của **LWT**.
 | Giá trị | Ý nghĩa |
 |---|---|
 | `online` | Hoạt động bình thường |
-| `degraded` | Chức năng một phần (ví dụ một số slave không reachable) |
-| `error` | Master có lỗi |
+| `degraded` | Chức năng một phần (ví dụ một số PLC không reachable) |
+| `error` | Gateway có lỗi |
 | `offline` | **Chỉ dùng cho LWT hoặc shutdown có kiểm soát** |
 
 ### 3.2 Payload LWT (đặc biệt)
 
-Đăng ký lúc connect, broker tự publish khi master mất kết nối đột ngột:
+Đăng ký lúc connect, broker tự publish khi gateway mất kết nối đột ngột:
 
 ```json
 {
@@ -182,10 +189,10 @@ Thông báo theo sự kiện (cảnh báo, lỗi, thay đổi trạng thái). Pu
   "type": "event",
   "events": [
     {
-      "code": "SLAVE_COMM_LOST",
+      "code": "PLC_COMM_LOST",
       "severity": "critical",
-      "message": "Slave 3 timeout after 3 retries",
-      "source": "slave:3",
+      "message": "PLC 3 timeout after 3 retries",
+      "source": "plc:3",
       "context": { "last_seen_ts": 1692815900, "retries": 3 }
     }
   ]
@@ -205,7 +212,7 @@ Mỗi phần tử trong `events[]`:
 | `code` | string | ✅ | **enum đóng** — xem bảng 4.2 | Mã sự kiện |
 | `severity` | string | ✅ | enum: `info` \| `warning` \| `critical` | Mức độ |
 | `message` | string | ❌ | ≤ 256 ký tự | Mô tả dễ đọc cho người |
-| `source` | string | ❌ | ≤ 64 ký tự | Nguồn gốc, vd. `slave:3`, `sensor:temperature` |
+| `source` | string | ❌ | ≤ 64 ký tự | Nguồn gốc, vd. `plc:3`, `sensor:temperature` |
 | `context` | object | ❌ | object tự do key-value | Thông tin bổ sung, vd. `{"value": 95.2}` |
 
 > ⚠️ **Không gửi `"context": null`.** Nếu không có dữ liệu bổ sung → **omit** trường này (`null` fail validation, drop cả message).
@@ -216,15 +223,15 @@ Trong v1, `code` là **enum đóng**: code ngoài danh sách dưới đây → m
 
 | Code | Severity khuyến nghị | Ý nghĩa |
 |---|---|---|
-| `SLAVE_COMM_LOST` | critical | Mất giao tiếp với một slave |
-| `SLAVE_COMM_RESTORED` | info | Khôi phục giao tiếp với slave |
-| `VALUE_OUT_OF_RANGE` | warning | Giá trị vượt ngưỡng cấu hình |
-| `SENSOR_FAULT` | warning | Cảm báo bất thường/không phản hồi |
+| `PLC_COMM_LOST` | critical | Mất giao tiếp với một PLC |
+| `PLC_COMM_RESTORED` | info | Khôi phục giao tiếp với PLC |
+| `VALUE_OUT_OF_RANGE` | warning | Giá trị vượt ngân sách cấu hình |
+| `SENSOR_FAULT` | warning | Cảm biến bất thường/không phản hồi |
 | `EMERGENCY_STOP` | critical | Nhấn nút dừng khẩn |
 | `FIRMWARE_UPDATE_START` | info | Bắt đầu cập nhật firmware |
-| `FIRMWARE_UPDATE_END` | info | Kết thúc cập nhật firmware |
-| `CONFIG_CHANGED` | info | Cấu hình master thay đổi |
-| `MASTER_REBOOT` | warning | Master tự reboot |
+| `FIRMWARE_UPDATE_END` | info | Kết cập nhật firmware |
+| `CONFIG_CHANGED` | info | Cấu hình gateway thay đổi |
+| `GATEWAY_REBOOT` | warning | Gateway tự reboot |
 | `BUFFER_OVERFLOW` | warning | Buffer offline đầy, dữ liệu bị drop |
 | `WATCHDOG_RESET` | critical | Reset bởi watchdog |
 | `POWER_ON` | info | just powered on |
@@ -237,16 +244,16 @@ Server **lưu** `code`, `severity`, `message` vào InfluxDB; `source`, `context`
 
 ---
 
-## 5. info → `devices/{id}/info`
+## 6. info → `devices/{id}/info`
 
-Danh tính & năng lực của master. Publish **1 lần ngay sau connect**, retain=true. Server chỉ **ghi log**, không lưu DB.
+Danh tính & năng lực của gateway. Publish **1 lần ngay sau connect**, retain=true. Server chỉ **ghi log**, không lưu DB.
 
 ```json
 {
   "device_id": "GW_LINE_A_01",
   "ts": 1692816000,
   "type": "info",
-  "master": {
+  "gateway": {
     "fw_version": "1.0.3",
     "hw_version": "STM32F103C8",
     "ip": "10.0.0.55",
@@ -254,14 +261,14 @@ Danh tính & năng lực của master. Publish **1 lần ngay sau connect**, ret
     "free_heap": 18432,
     "cpu_temp": 42.5,
     "reset_reason": "POWER_ON",
-    "slaves": [
+    "plcs": [
       { "id": 1, "addr": 1, "name": "PLC_line_A" }
     ]
   }
 }
 ```
 
-### 5.1 Object `master`
+### 6.1 Object `gateway`
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Mô tả |
 |---|---|---|---|---|
@@ -273,15 +280,15 @@ Danh tính & năng lực của master. Publish **1 lần ngay sau connect**, ret
 | `free_heap` | integer | ❌ | ≥ 0 | RAM còn trống (bytes) |
 | `cpu_temp` | number | ❌ | −40 – 125 (°C) | Nhiệt độ MCU |
 | `reset_reason` | string | ❌ | enum: `POWER_ON` \| `WATCHDOG` \| `SOFT` \| `HARDWARE` \| `BROWN_OUT` \| `UNKNOWN` | Lý do reset gần nhất |
-| `slaves` | array | ❌ | — | Danh sách slave đang được poll (tham khảo, server không phụ thuộc để parse telemetry) |
+| `plcs` | array | ❌ | — | Danh sách PLC được gateway quản lý (tham khảo, server không phụ thuộc để parse telemetry) |
 
-Phần tử `slaves[]`: `id` (integer 1–247, bắt buộc), `addr` (integer 1–247, bắt buộc), `name` (string, tuỳ chọn).
+Phần tử `plcs[]`: `id` (integer 1–247, bắt buộc), `addr` (integer 1–247, bắt buộc), `name` (string, tuỳ chọn).
 
 ---
 
-## 6. diag → `devices/{id}/diag`
+## 7. diag → `devices/{id}/diag`
 
-Thống kê vận hành định kỳ (5–15 phút/lần). Optional nhưng **nên có** để giám sát sức khoẻ master. QoS 0. Server chỉ **ghi log**, không lưu DB.
+Thống kê vận hành định kỳ (5–15 phút/lần). Optional nhưng **nên có** để giám sát sức khỏe gateway. QoS 0. Server chỉ **ghi log**, không lưu DB (xem mục 8.2 về lưu trữ Postgres riêng theo D-21).
 
 ```json
 {
@@ -291,7 +298,7 @@ Thống kê vận hành định kỳ (5–15 phút/lần). Optional nhưng **nê
   "stats": {
     "poll_cycle_ms": 120,
     "uptime_s": 86400,
-    "slaves": [
+    "plcs": [
       { "id": 1, "addr": 1, "ok": 5000, "fail": 2, "last_ok_ts": 1692815900, "avg_latency_ms": 12.5 }
     ],
     "tx_packets": 43200,
@@ -302,23 +309,23 @@ Thống kê vận hành định kỳ (5–15 phút/lần). Optional nhưng **nê
 }
 ```
 
-### 6.1 Object `stats`
+### 7.1 Object `stats`
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Mô tả |
 |---|---|---|---|---|
-| `poll_cycle_ms` | integer | ✅ | ≥ 0 | Thời gian hoàn thành 1 vòng poll tất cả slave (ms) |
+| `poll_cycle_ms` | integer | ✅ | ≥ 0 | Thời gian hoàn thành 1 vòng poll tất cả PLC (ms) |
 | `uptime_s` | integer | ❌ | ≥ 0 | Uptime |
-| `slaves` | array | ✅ | — | Thống kê theo từng slave |
+| `plcs` | array | ✅ | — | Thống kê theo từng PLC |
 | `tx_packets` | integer | ❌ | ≥ 0 | Tổng packet MQTT gửi thành công từ boot |
 | `tx_failures` | integer | ❌ | ≥ 0 | Tổng lần gửi thất bại từ boot |
 | `mqtt_reconnect` | integer | ❌ | ≥ 0 | Số lần reconnect MQTT từ boot |
 | `avg_latency_ms` | number | ❌ | ≥ 0 | Latency trung bình round-trip tới broker (ms) |
 
-Phần tử `slaves[]`:
+Phần tử `plcs[]`:
 
 | Trường | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `id` | integer 1–247 | ✅ | Slave ID |
+| `id` | integer 1–247 | ✅ | PLC ID (Modbus slave ID) |
 | `addr` | integer 1–247 | ✅ | Địa chỉ Modbus |
 | `ok` | integer ≥ 0 | ✅ | Số lần poll thành công từ boot |
 | `fail` | integer ≥ 0 | ✅ | Số lần poll thất bại từ boot |
@@ -327,9 +334,9 @@ Phần tử `slaves[]`:
 
 ---
 
-## 7. Validation & hành vi server
+## 8. Validation & hành vi server
 
-### 7.1 Pipeline xử lý một message (`backend/app/mqtt_consumer.py`)
+### 8.1 Pipeline xử lý một message (`backend/app/mqtt/consumer.py`)
 
 ```
 Nhận message → parse topic (devices/{device_id}/{category})
@@ -349,7 +356,7 @@ Bảng lỗi → kết quả (server **DROP im lặng**, chỉ log):
 
 Xem log backend: `docker compose logs -f backend`.
 
-### 7.2 Server làm gì với từng category
+### 8.2 Server làm gì với từng category
 
 | Category | InfluxDB measurement | Tags | Fields | WebSocket |
 |---|---|---|---|---|
@@ -357,11 +364,11 @@ Xem log backend: `docker compose logs -f backend`.
 | `status` | `device_status` | `device_id`, `state` | `uptime_s` | Broadcast |
 | `event` | `device_event` (mỗi event 1 point) | `device_id`, `event_code`, `severity` | `message` | Broadcast (gồm `source`, `context`) |
 | `info` | — (chỉ log `fw_version`) | — | — | — |
-| `diag` | — (chỉ log) | — | — | — |
+| `diag` | — (Postgres `device_diag`, JSONB `payload`; xem D-21) | — | — | — |
 
 ---
 
-## 8. Giới hạn & ngân sách khuyến nghị
+## 9. Giới hạn & ngân sách khuyến nghị
 
 Giá trị cứng theo schema in đậm; còn lại là khuyến nghị vận hành:
 
@@ -379,21 +386,21 @@ Giá trị cứng theo schema in đậm; còn lại là khuyến nghị vận h�
 
 ---
 
-## 9. Tự test payload
+## 10. Tự test payload
 
 ```bash
 # 1. Publish thử telemetry thay cho firmware
-docker run --rm --network mvp_default eclipse-mosquitto \
+docker run --rm --network iigw_default eclipse-mosquitto \
   mosquitto_pub -h emqx -p 1883 -t "devices/TEST_01/telemetry" \
   -m '{"device_id":"TEST_01","ts":'"$(date +%s)"',"type":"telemetry","seq":1,"registers":{"hr_100":352}}'
 
-# 2. Publish thử event
-docker run --rm --network mvp_default eclipse-mosquitto \
+# 2. Publish thử event (dùng code mới: PLC_COMM_LOST)
+docker run --rm --network iigw_default eclipse-mosquitto \
   mosquitto_pub -h emqx -p 1883 -t "devices/TEST_01/event" \
   -m '{"device_id":"TEST_01","ts":'"$(date +%s)"',"type":"event","events":[{"code":"POWER_ON","severity":"info"}]}'
 
 # 3. Publish thử status (CHÚ Ý: không có "reason":null)
-docker run --rm --network mvp_default eclipse-mosquitto \
+docker run --rm --network iigw_default eclipse-mosquitto \
   mosquitto_pub -h emqx -p 1883 -t "devices/TEST_01/status" \
   -m '{"device_id":"TEST_01","ts":'"$(date +%s)"',"type":"status","state":"online","uptime_s":0}'
 
@@ -402,7 +409,7 @@ curl http://localhost:8000/api/devices
 curl http://localhost:8000/api/devices/TEST_01/latest
 
 # 5. Negative test — key register sai format, phải thấy log drop ở backend
-docker run --rm --network mvp_default eclipse-mosquitto \
+docker run --rm --network iigw_default eclipse-mosquitto \
   mosquitto_pub -h emqx -p 1883 -t "devices/TEST_02/telemetry" \
   -m '{"device_id":"TEST_02","ts":'"$(date +%s)"',"type":"telemetry","registers":{"temperature":30}}'
 docker compose logs -f backend   # tìm dòng "Schema validation failed"
@@ -412,5 +419,33 @@ Device xuất hiện ở API/dashboard trong vài giây = payload hợp lệ.
 
 ---
 
-*Phiên bản protocol: v1.0 — thay đổi format cần đồng bộ cả hai bên (firmware ↔ server) trước khi deploy.*
-*Nguồn tham chiếu: `backend/master_protocol_v1.json` (schema), `simulator/simulator.py` (implementation mẫu), `docs/master_integration_spec.md` (kết nối & boot sequence).*
+## 11. Migration từ protocol "master/slave" cũ
+
+Tài liệu và code đã chuyển đổi vocabulary từ "master" (STM32+W5500) → **gateway** và "slave" (Modbus slave devices) → **PLC**. Áp dụng cho tất cả tài liệu, code backend, schema, simulator từ bản này. **Breaking change cho firmware**:
+
+| Trước | Sau |
+|---|---|
+| `info.master.fw_version` | `info.gateway.fw_version` |
+| `info.master.slaves[]` | `info.gateway.plcs[]` |
+| `info.master.slaves[].id` / `.addr` / `.name` | (giữ nguyên) |
+| `diag.stats.slaves[]` | `diag.stats.plcs[]` |
+| `diag.stats.slaves[].id` / `.addr` / `.ok` / `.fail` / `.last_ok_ts` / `.avg_latency_ms` | (giữ nguyên) |
+| `MASTER_REBOOT` | `GATEWAY_REBOOT` |
+| `SLAVE_COMM_LOST` | `PLC_COMM_LOST` |
+| `SLAVE_COMM_RESTORED` | `PLC_COMM_RESTORED` |
+| MQTT topic `devices/{device_id}/...` | (giữ nguyên) |
+| Envelope field `device_id` | (giữ nguyên — vẫn là gateway id) |
+
+**MQTT topic** giữ nguyên `devices/{id}/...` vì đó là contract firmware-side, không đổi được. **`device_id` envelope field** giữ nguyên — vẫn đại diện cho gateway id. Chỉ các field **bên trong payload** (`info.master`, `info.gateway.plcs`, v.v.) và event **enum** đã đổi.
+
+**Firmware build mới** (sau ngày release bản này) phải:
+1. Publish payload với key `gateway` thay `master` trong info message.
+2. Publish payload với key `plcs` thay `slaves` trong info.gateway và diag.stats.
+3. Dùng event code `GATEWAY_REBOOT`, `PLC_COMM_LOST`, `PLC_COMM_RESTORED` thay các tên cũ.
+
+**Backend** không có backward-compat: schema validator drop payload dùng tên cũ ngay lập tức. Nếu cần transition period, deploy firmware + backend song song.
+
+---
+
+*Phiên bản protocol: v1.1 — vocabulary `gateway` / `plc` (thay `master` / `slave`).*
+*Nguồn tham chiếu: `backend/master_protocol_v1.json` (schema), `simulator/simulator.py` (implementation mẫu), `docs/02_design/master_integration_spec.md` (kết nối & boot sequence).*

@@ -1,6 +1,6 @@
 # IIoT Gateway — DENSO Factory
 
-Web dashboard cho hệ thống Gateway IIoT giá rẻ: PLC/thiết bị công nghiệp đời cũ (RS-485/Modbus RTU) → Master (STM32 + W5500) → MQTT → Backend → Webapp realtime.
+Web dashboard cho hệ thống Gateway IIoT giá rẻ: PLC/thiết bị công nghiệp đời cũ (RS-485/Modbus RTU) → Gateway (STM32 + W5500) → MQTT → Backend → Webapp realtime.
 
 ![stack](https://img.shields.io/badge/stack-React%2018%20%7C%20FastAPI%20%7C%20Postgres%20%7C%20InfluxDB%20%7C%20EMQX%20%7C%20Docker-0f172a)
 
@@ -29,7 +29,7 @@ Toàn bộ stack chạy trong Docker Compose: `postgres`, `influxdb`, `emqx`, `b
 
 ```
 ┌──────────────────┐         ┌──────────────────┐
-│  Master (STM32)  │         │  Simulator (dev) │
+│  Gateway (STM32) │         │  Simulator (dev) │
 │  RS-485/Modbus    │         │  simulator.py     │
 │  → MQTT publish   │         │                  │
 └──────────┬───────┘         └──────────┬───────┘

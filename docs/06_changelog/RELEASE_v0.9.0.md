@@ -10,11 +10,11 @@ version: 0.9.0
 
 # Release v0.9.0 — Project Complete (M0–M9)
 
-> IIoT Gateway webapp: real-time dashboard cho hệ thống PLC/Modbus → Master (STM32+W5500) → MQTT → Backend → Webapp.
+> IIoT Gateway webapp: real-time dashboard cho hệ thống PLC/Modbus → Gateway (STM32+W5500) → MQTT → Backend → Webapp.
 
 ## Highlights
 
-- **End-to-end pipeline**: Simulator/Master → EMQX → Backend (FastAPI + aiomqtt + jsonschema) → InfluxDB/Postgres → REST API + WebSocket.
+- **End-to-end pipeline**: Simulator/Gateway → EMQX → Backend (FastAPI + aiomqtt + jsonschema) → InfluxDB/Postgres → REST API + WebSocket.
 - **Multi-instance backend**: Redis pub/sub (`iigw:ws` channel) cho cross-instance WebSocket broadcast. Rate limit shared qua Redis ZSET (D-44 future done).
 - **Frontend SPA**: React 18 + TS + Vite, 6 pages (Login, Overview, DeviceDetail 5-tab, Events, Diagnostics, Settings), uPlot chart + ECharts gauge, dark/light theme, sound alerts (Web Audio).
 - **Auth**: JWT cookie (access 15m + refresh 8h) + CSRF double-submit + bcrypt cost 12 + login rate limit.
