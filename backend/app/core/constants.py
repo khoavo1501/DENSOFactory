@@ -23,17 +23,18 @@ SEVERITY_WARNING = "warning"
 SEVERITY_CRITICAL = "critical"
 VALID_SEVERITIES = {SEVERITY_INFO, SEVERITY_WARNING, SEVERITY_CRITICAL}
 
-# Event code enums (from payload spec mục 4.2, closed enum v1)
+# Event code enums (from payload spec v1.1 mục 4.2, closed enum)
+# Vocabulary: 'gateway' = STM32+W5500, 'plc' = Modbus slave.
 VALID_EVENT_CODES = {
-    "SLAVE_COMM_LOST",
-    "SLAVE_COMM_RESTORED",
+    "PLC_COMM_LOST",
+    "PLC_COMM_RESTORED",
     "VALUE_OUT_OF_RANGE",
     "SENSOR_FAULT",
     "EMERGENCY_STOP",
     "FIRMWARE_UPDATE_START",
     "FIRMWARE_UPDATE_END",
     "CONFIG_CHANGED",
-    "MASTER_REBOOT",
+    "GATEWAY_REBOOT",
     "BUFFER_OVERFLOW",
     "WATCHDOG_RESET",
     "POWER_ON",

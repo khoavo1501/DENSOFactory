@@ -85,7 +85,7 @@ def test_enums():
         VALID_STATES,
         VALID_SEVERITIES,
     )
-    assert "SLAVE_COMM_LOST" in VALID_EVENT_CODES
+    assert "PLC_COMM_LOST" in VALID_EVENT_CODES
     assert VALID_SOURCES == {"simulated", "real"}
     assert "online" in VALID_STATES
     assert "critical" in VALID_SEVERITIES

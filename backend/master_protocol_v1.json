@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Master Protocol v1",
-  "description": "Schema for messages published by master (STM32+W5500) to MQTT broker. See docs/99_attachments/payload_spec_v1.md.",
+  "title": "Gateway Protocol v1",
+  "description": "Schema for messages published by gateway (STM32+W5500) to MQTT broker. Vocabulary: 'gateway' = STM32+W5500 master, 'plc' = Modbus slave device. See docs/99_attachments/payload_spec_v1.md.",
   "oneOf": [
     { "$ref": "#/$defs/telemetry" },
     { "$ref": "#/$defs/status" },
@@ -93,11 +93,11 @@
                   "code": {
                     "type": "string",
                     "enum": [
-                      "SLAVE_COMM_LOST", "SLAVE_COMM_RESTORED",
+                      "PLC_COMM_LOST", "PLC_COMM_RESTORED",
                       "VALUE_OUT_OF_RANGE", "SENSOR_FAULT",
                       "EMERGENCY_STOP", "FIRMWARE_UPDATE_START",
                       "FIRMWARE_UPDATE_END", "CONFIG_CHANGED",
-                      "MASTER_REBOOT", "BUFFER_OVERFLOW",
+                      "GATEWAY_REBOOT", "BUFFER_OVERFLOW",
                       "WATCHDOG_RESET", "POWER_ON",
                       "W5500_LINK_DOWN", "W5500_LINK_UP",
                       "MQTT_DISCONNECTED", "MQTT_RECONNECTED"
@@ -125,7 +125,7 @@
           "type": "object",
           "properties": {
             "type": { "const": "info" },
-            "master": {
+            "gateway": {
               "type": "object",
               "required": ["fw_version", "hw_version"],
               "properties": {
@@ -146,7 +146,7 @@
                   "type": "string",
                   "enum": ["POWER_ON", "WATCHDOG", "SOFT", "HARDWARE", "BROWN_OUT", "UNKNOWN"]
                 },
-                "slaves": {
+                "plcs": {
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -161,7 +161,7 @@
               }
             }
           },
-          "required": ["master"]
+          "required": ["gateway"]
         }
       ]
     },
@@ -174,7 +174,7 @@
             "type": { "const": "diag" },
             "stats": {
               "type": "object",
-              "required": ["poll_cycle_ms", "slaves"],
+              "required": ["poll_cycle_ms", "plcs"],
               "properties": {
                 "poll_cycle_ms": { "type": "integer", "minimum": 0 },
                 "uptime_s": { "type": "integer", "minimum": 0 },
@@ -182,7 +182,7 @@
                 "tx_failures": { "type": "integer", "minimum": 0 },
                 "mqtt_reconnect": { "type": "integer", "minimum": 0 },
                 "avg_latency_ms": { "type": "number", "minimum": 0 },
-                "slaves": {
+                "plcs": {
                   "type": "array",
                   "items": {
                     "type": "object",

@@ -16,7 +16,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.core.constants import VALID_EVENT_CODES, VALID_SEVERITIES, VALID_STATES
-from app.services import device_sources
+from app.services import device_sources, gateways
 from app.services.influx import get_influx  # noqa: F401  (used in consumer)
 from app.ws.hub import get_hub
 
@@ -58,6 +58,21 @@ def handle_telemetry(db: Session, payload: dict) -> None:
         _log.warning("telemetry: source check failed: %s; drop", e)
         return
 
+    # M10: keep gateway/plc tables fresh (idempotent upsert)
+    try:
+        gateways.touch_for_message(
+            db, device_id, state="online", fw_version=payload.get("fw")
+        )
+        gateways.record_snapshot(
+            db,
+            device_id=device_id,
+            ts=payload.get("ts") or _now(),
+            registers=registers,
+            fw_version=payload.get("fw"),
+        )
+    except Exception as e:
+        _log.warning("telemetry: M10 upsert failed: %s", e)
+
     hub = get_hub()
     try:
         loop = asyncio.get_running_loop()
@@ -85,6 +100,14 @@ def handle_status(db: Session, payload: dict) -> None:
         ts = _now()
     enriched = {**payload, "ts": ts}
 
+    # M10: keep gateway/plc tables fresh (idempotent upsert)
+    try:
+        gateways.touch_for_message(
+            db, device_id, state=state, fw_version=payload.get("fw")
+        )
+    except Exception as e:
+        _log.warning("status: gateway upsert failed: %s", e)
+
     hub = get_hub()
     try:
         loop = asyncio.get_running_loop()
@@ -100,7 +123,7 @@ def handle_event(db: Session, payload: dict) -> None:
         _log.warning("event: missing device_id/events; drop")
         return
     if not (1 <= len(events) <= 50):
-        _log.warning("event: events out of [1,50]; drop")
+        _log.warning("event: events out of [1,50] range; drop")
         return
     for ev in events:
         if ev.get("code") not in VALID_EVENT_CODES:
@@ -115,6 +138,22 @@ def handle_event(db: Session, payload: dict) -> None:
     except Exception as e:
         _log.warning("event: source check failed: %s; drop", e)
         return
+
+    # M10: record warnings for warning/critical events
+    try:
+        for ev in events:
+            if ev.get("severity") in ("warning", "critical"):
+                gateways.record_warning(
+                    db,
+                    target_type="plc",
+                    target_id=device_id,
+                    severity=ev["severity"],
+                    code=ev["code"],
+                    message=ev.get("message"),
+                    ts=payload.get("ts") or _now(),
+                )
+    except Exception as e:
+        _log.warning("event: warning record failed: %s", e)
 
     hub = get_hub()
     try:
@@ -131,7 +170,7 @@ def handle_diag(db: Session, payload: dict) -> None:
     if not device_id or not isinstance(stats, dict):
         _log.warning("diag: missing device_id/stats; drop")
         return
-    if "poll_cycle_ms" not in stats or "slaves" not in stats:
+    if "poll_cycle_ms" not in stats or "plcs" not in stats:
         _log.warning("diag: missing required fields; drop")
         return
 

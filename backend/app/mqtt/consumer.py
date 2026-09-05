@@ -1,6 +1,6 @@
 """MQTT consumer: validate per master_protocol_v1.json and dispatch.
 
-Spec mục 7.1: backend reads JSON schema on every message; schema file
+Spec mục 8.1: backend reads JSON schema on every message; schema file
 is volume-mounted so editing it takes effect without restart.
 """
 from __future__ import annotations
@@ -73,8 +73,8 @@ def _dispatch(db: Session, category: str, payload: dict) -> None:
     elif category == "diag":
         handle_diag(db, payload)
     elif category == "info":
-        # spec mục 7.2: info chỉ log; we just log fw_version
-        fw = (payload.get("master") or {}).get("fw_version")
+        # spec mục 8.2: info chỉ log; we just log fw_version
+        fw = (payload.get("gateway") or {}).get("fw_version")
         _log.info("info: device_id=%s fw_version=%s", payload.get("device_id"), fw)
     else:
         _log.warning("unknown category %r; drop", category)
