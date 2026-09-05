@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Calendar, RefreshCw, Search, Inbox } from "lucide-react";
 import { devicesApi, eventsApi } from "@/api/endpoints";
-import { SeverityChip } from "@/components/Indicators";
+import { PageHeader } from "@/components/Breadcrumb";
 import { TimeRangePicker } from "@/components/TimeRangePicker";
+import { SeverityChip } from "@/components/Indicators";
 import { resolveRange } from "@/utils/timeRange";
 import type { EventItem, Severity, EventCode, Device } from "@/types";
 
@@ -13,14 +15,13 @@ const SEVERITY_FILTERS: Array<"all" | Severity> = [
   "info",
 ];
 
-// Top event codes for quick filter (rest available via API code param).
 const COMMON_CODES: EventCode[] = [
-  "SLAVE_COMM_LOST",
-  "SLAVE_COMM_RESTORED",
+  "PLC_COMM_LOST",
+  "PLC_COMM_RESTORED",
   "VALUE_OUT_OF_RANGE",
   "SENSOR_FAULT",
   "EMERGENCY_STOP",
-  "MASTER_REBOOT",
+  "GATEWAY_REBOOT",
   "BUFFER_OVERFLOW",
   "WATCHDOG_RESET",
   "POWER_ON",
@@ -48,8 +49,15 @@ export function EventsPage() {
   const severityParam = severity === "all" ? undefined : severity;
   const deviceParam = deviceId || undefined;
 
-  const { data, isLoading } = useQuery<EventItem[]>({
-    queryKey: ["events", severityParam, codeParam, deviceParam, range, page],
+  const { data, isLoading, isError } = useQuery<EventItem[]>({
+    queryKey: [
+      "events",
+      severityParam,
+      codeParam,
+      deviceParam,
+      range,
+      page,
+    ],
     queryFn: () =>
       eventsApi.list({
         severity: severityParam,
@@ -74,20 +82,17 @@ export function EventsPage() {
   };
 
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 12,
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: 16 }}>Events</h1>
-        <span className="muted" style={{ fontSize: 12 }}>
-          {data?.length ?? 0} on this page
-        </span>
-        <div style={{ marginLeft: "auto" }}>
+    <div className="page">
+      <PageHeader
+        title="Events"
+        subtitle={
+          isLoading
+            ? "loading…"
+            : data
+              ? `${data.length} on this page · last ${range.label ?? "24h"}`
+              : `last ${range.label ?? "24h"}`
+        }
+        actions={
           <TimeRangePicker
             from={range.from}
             to={range.to}
@@ -96,187 +101,183 @@ export function EventsPage() {
               setPage(1);
             }}
           />
-        </div>
-      </div>
+        }
+      />
 
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          alignItems: "flex-start",
-          marginBottom: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <div className="card-subtitle" style={{ marginBottom: 4 }}>
-            Severity
-          </div>
-          <div style={{ display: "flex", gap: 4 }}>
-            {SEVERITY_FILTERS.map((s) => (
-              <button
-                key={s}
-                className={"btn" + (severity === s ? " btn-primary" : "")}
-                onClick={() => {
-                  setSeverity(s);
-                  setPage(1);
-                }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <div className="card-subtitle" style={{ marginBottom: 4 }}>
-            Device
-          </div>
-          <select
-            value={deviceId}
-            onChange={(e) => {
-              setDeviceId(e.target.value);
-              setPage(1);
-            }}
-            style={{ minWidth: 200 }}
-          >
-            <option value="">All devices</option>
-            {devices?.map((d) => (
-              <option key={d.device_id} value={d.device_id}>
-                {d.device_id}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div style={{ flex: 1, minWidth: 320 }}>
-          <div className="card-subtitle" style={{ marginBottom: 4 }}>
-            Codes ({codes.size} selected)
-          </div>
-          <div
-            style={{
-              display: "flex",
-              gap: 4,
-              flexWrap: "wrap",
-              maxHeight: 80,
-              overflow: "auto",
-            }}
-          >
-            {COMMON_CODES.map((c) => (
-              <button
-                key={c}
-                className={"btn" + (codes.has(c) ? " btn-primary" : "")}
-                onClick={() => toggleCode(c)}
-                style={{ fontSize: 11, padding: "2px 6px", height: 24 }}
-              >
-                {c}
-              </button>
-            ))}
-            {codes.size > 0 && (
-              <button
-                className="btn btn-ghost"
-                onClick={() => setCodes(new Set())}
-                style={{ fontSize: 11, height: 24 }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="card" style={{ padding: 0 }}>
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            fontSize: 12,
-          }}
-        >
-          <thead>
-            <tr style={{ borderBottom: "1px solid var(--border)" }}>
-              <th style={th}>Time</th>
-              <th style={th}>Severity</th>
-              <th style={th}>Code</th>
-              <th style={th}>Device</th>
-              <th style={th}>Message</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={5} style={{ padding: 16, textAlign: "center" }}>
-                  Loading...
-                </td>
-              </tr>
-            )}
-            {data?.length === 0 && !isLoading && (
-              <tr>
-                <td
-                  colSpan={5}
-                  style={{ padding: 16, textAlign: "center" }}
-                  className="muted"
+      <div className="card">
+        <div className="events-filters">
+          <div className="events-filter-group">
+            <div className="eyebrow">Severity</div>
+            <div className="filter-group" role="tablist">
+              {SEVERITY_FILTERS.map((s) => (
+                <button
+                  key={s}
+                  role="tab"
+                  aria-selected={severity === s}
+                  className={`filter-chip${severity === s ? " active" : ""}`}
+                  onClick={() => {
+                    setSeverity(s);
+                    setPage(1);
+                  }}
                 >
-                  No events.
-                </td>
-              </tr>
-            )}
-            {(data ?? []).map((e, i) => (
-              <tr
-                key={`${e.ts}-${e.code}-${i}`}
-                style={{ borderBottom: "1px solid var(--border)" }}
-              >
-                <td style={td} className="mono">
-                  {new Date(e.ts * 1000).toLocaleString()}
-                </td>
-                <td style={td}>
-                  <SeverityChip severity={e.severity} />
-                </td>
-                <td style={td} className="mono">
-                  {e.code}
-                </td>
-                <td style={td} className="mono">
-                  {e.device_id}
-                </td>
-                <td style={td}>{e.message ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="events-filter-group">
+            <div className="eyebrow">Device</div>
+            <select
+              value={deviceId}
+              onChange={(e) => {
+                setDeviceId(e.target.value);
+                setPage(1);
+              }}
+              style={{ minWidth: 200 }}
+            >
+              <option value="">All devices</option>
+              {devices?.map((d) => (
+                <option key={d.device_id} value={d.device_id}>
+                  {d.device_id}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="events-filter-group events-filter-codes">
+            <div className="eyebrow">
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                Codes
+                {codes.size > 0 && (
+                  <span className="tab-count">{codes.size}</span>
+                )}
+              </span>
+            </div>
+            <div className="events-code-list">
+              {COMMON_CODES.map((c) => (
+                <button
+                  key={c}
+                  className={`filter-chip${codes.has(c) ? " active" : ""}`}
+                  onClick={() => toggleCode(c)}
+                >
+                  {c.toLowerCase()}
+                </button>
+              ))}
+              {codes.size > 0 && (
+                <button
+                  className="filter-chip"
+                  onClick={() => setCodes(new Set())}
+                  style={{ color: "var(--severity-critical)" }}
+                >
+                  clear
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <button
-          className="btn"
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-        >
-          Prev
-        </button>
-        <span className="muted" style={{ alignSelf: "center" }}>
+      {isError && (
+        <div className="card">
+          <div className="empty-large" role="alert">
+            <span className="empty-icon" aria-hidden>
+              !
+            </span>
+            <h3>Could not load events</h3>
+            <p>Check the connection to the API and try again.</p>
+          </div>
+        </div>
+      )}
+
+      {!isError && (
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Severity</th>
+                  <th>Code</th>
+                  <th>Device</th>
+                  <th>Message</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading && (
+                  <tr className="table-empty">
+                    <td colSpan={5}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          padding: 8,
+                        }}
+                      >
+                        <span className="skeleton" style={{ width: 14, height: 14 }}>
+                          &nbsp;
+                        </span>
+                        loading events…
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && data?.length === 0 && (
+                  <tr className="table-empty">
+                    <td colSpan={5}>
+                      <div className="empty-large">
+                        <span className="empty-icon" aria-hidden>
+                          <Inbox size={18} />
+                        </span>
+                        <h3>No events match the current filters</h3>
+                        <p>
+                          Try widening the time range, picking a different
+                          severity, or clearing the code selection.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {(data ?? []).map((e: EventItem, i: number) => (
+                  <tr key={`${e.ts}-${e.code}-${i}`}>
+                    <td className="mono">
+                      {new Date(e.ts * 1000).toLocaleString()}
+                    </td>
+                    <td>
+                      <SeverityChip severity={e.severity} />
+                    </td>
+                    <td className="mono">{e.code.toLowerCase().replace(/_/g, " ")}</td>
+                    <td className="mono">{e.device_id}</td>
+                    <td>{e.message ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <div className="events-pagination">
+        <span className="muted mono" style={{ fontSize: 11 }}>
           Page {page}
         </span>
-        <button
-          className="btn"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={(data?.length ?? 0) < pageSize}
-        >
-          Next
-        </button>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <button
+            className="btn btn-sm"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Previous
+          </button>
+          <button
+            className="btn btn-sm"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={(data?.length ?? 0) < pageSize}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
 }
-
-const th: React.CSSProperties = {
-  textAlign: "left",
-  padding: "6px 8px",
-  fontWeight: 600,
-  fontSize: 11,
-  textTransform: "uppercase",
-  letterSpacing: 0.5,
-  color: "var(--text-muted)",
-};
-
-const td: React.CSSProperties = {
-  padding: "6px 8px",
-  verticalAlign: "middle",
-};

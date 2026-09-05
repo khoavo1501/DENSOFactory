@@ -4,7 +4,11 @@ import type {
   DeviceSource,
   DiagRow,
   EventItem,
+  Gateway,
+  GatewayWithPLCs,
+  PLC,
   User,
+  Warning,
 } from "@/types";
 
 export const authApi = {
@@ -133,3 +137,39 @@ function getCookie(name: string): string | null {
   );
   return m ? decodeURIComponent(m[1]) : null;
 }
+
+/* ====== Gateway / PLC / Warnings (M10) ====== */
+
+export const gatewaysApi = {
+  list: () => api<Gateway[]>("/gateways"),
+  get: (gatewayId: string) =>
+    api<GatewayWithPLCs>(`/gateways/${encodeURIComponent(gatewayId)}`),
+};
+
+export const plcsApi = {
+  list: () => api<PLC[]>("/plcs"),
+  get: (plcId: string) => api<PLC>(`/plcs/${encodeURIComponent(plcId)}`),
+  history: (plcId: string, register: string, from: number, to: number) =>
+    api<Array<{ _time: string; _value: string }>>(
+      `/plcs/${encodeURIComponent(plcId)}/history?register=${register}&from=${from}&to=${to}`
+    ),
+};
+
+export const unpairedApi = {
+  list: () => api<PLC[]>("/plcs/unpaired"),
+  pair: (plcId: string, gatewayId: string) =>
+    api<void>(`/plcs/${encodeURIComponent(plcId)}/pair`, {
+      method: "POST",
+      body: { gateway_id: gatewayId },
+    }),
+};
+
+export const warningsApi = {
+  list: (params: { since?: number; target_type?: string; target_id?: string } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.since) qs.set("since", String(params.since));
+    if (params.target_type) qs.set("target_type", params.target_type);
+    if (params.target_id) qs.set("target_id", params.target_id);
+    return api<Warning[]>(`/warnings?${qs.toString()}`);
+  },
+};

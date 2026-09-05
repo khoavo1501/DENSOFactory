@@ -1,4 +1,5 @@
 // Types matching backend payload spec (payload_spec_v1.md) + API response shapes.
+// Vocabulary: 'gateway' = STM32+W5500, 'plc' = Modbus slave.
 
 export type Source = "simulated" | "real";
 
@@ -7,15 +8,15 @@ export type DeviceState = "online" | "offline" | "error" | "degraded";
 export type Severity = "info" | "warning" | "critical";
 
 export type EventCode =
-  | "SLAVE_COMM_LOST"
-  | "SLAVE_COMM_RESTORED"
+  | "PLC_COMM_LOST"
+  | "PLC_COMM_RESTORED"
   | "VALUE_OUT_OF_RANGE"
   | "SENSOR_FAULT"
   | "EMERGENCY_STOP"
   | "FIRMWARE_UPDATE_START"
   | "FIRMWARE_UPDATE_END"
   | "CONFIG_CHANGED"
-  | "MASTER_REBOOT"
+  | "GATEWAY_REBOOT"
   | "BUFFER_OVERFLOW"
   | "WATCHDOG_RESET"
   | "POWER_ON"
@@ -83,4 +84,56 @@ export interface WsMessage {
   device_id: string;
   ts: number;
   [key: string]: unknown;
+}
+
+/* ====== Gateway / PLC (M10) ====== */
+
+export type GatewayStatus = "online" | "offline" | "warning";
+export type PLCStatus = "online" | "offline";
+export type PLCMode = "normal" | "realtime";
+export type OperatingStatus = "running" | "stopped";
+
+export interface Gateway {
+  gateway_id: string;
+  name: string;
+  status: GatewayStatus;
+  location?: string;
+  fw_version?: string;
+  ip?: string;
+  last_seen_ts?: number;
+}
+
+export interface PLCSnapshot {
+  temperature?: number;
+  rpm?: number;
+  current_amp?: number;
+  heartbeat?: number;
+  ts?: number;
+}
+
+export interface PLC {
+  plc_id: string;
+  gateway_id: string;
+  status: PLCStatus;
+  operating_status?: OperatingStatus;
+  name?: string;
+  location?: string;
+  model?: string;
+  last_seen_ts?: number;
+  latest_snapshot?: PLCSnapshot;
+}
+
+export interface Warning {
+  id: string;
+  target_type: "gateway" | "plc";
+  target_id: string;
+  code: string;
+  severity: Severity;
+  message?: string;
+  cleared: boolean;
+  ts: number;
+}
+
+export interface GatewayWithPLCs extends Gateway {
+  plcs: PLC[];
 }

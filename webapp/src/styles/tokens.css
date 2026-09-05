@@ -1,100 +1,192 @@
-/* Design tokens for IIoT Gateway webapp (D-02 Grafana + HMI).
-   Single source of truth for color, typography, spacing.
-   Light/dark via [data-theme="..."] on <html>. */
+/* Design tokens — IIoT Gateway dashboard.
+   Industrial enterprise, Grafana-inspired.
+   Spec colors:
+   - Dark: bg #0D1117, panel #151B23
+   - Light: bg #F2F4F7, panel #FFFFFF
+   - Accent: amber #E0973B
+   - States: online #39C58F, warn #E0973B, offline #DB5A5A
+   - Type: IBM Plex Sans + IBM Plex Mono
+*/
 
 :root,
 [data-theme="dark"] {
   /* Surfaces */
-  --bg-base: #0f1419;
-  --bg-elevated: #1a212b;
-  --bg-overlay: #232b36;
-  --bg-hover: #2a3340;
-  --border: #2d3748;
-  --border-strong: #3d4856;
+  --bg-base: #0d1117;
+  --bg-elevated: #151b23;
+  --bg-overlay: #1c232c;
+  --bg-hover: #1f2731;
+  --border: #2a323d;
+  --border-strong: #3a4452;
 
   /* Text */
-  --text-primary: #e6edf3;
-  --text-secondary: #9ca8b8;
-  --text-muted: #6b7785;
-  --text-inverse: #0f1419;
+  --text-primary: #e6ecf2;
+  --text-secondary: #9aa6b6;
+  --text-muted: #6b7684;
+  --text-inverse: #0d1117;
 
-  /* State (device) */
-  --state-online: #16a34a;
-  --state-degraded: #eab308;
-  --state-error: #dc2626;
-  --state-offline: #6b7280;
+  /* Accent (amber) */
+  --accent: #e0973b;
+  --accent-hover: #f0a84a;
+  --accent-soft: rgba(224, 151, 59, 0.14);
+  --accent-strong: rgba(224, 151, 59, 0.32);
+
+  /* Device states */
+  --state-online: #39c58f;
+  --state-degraded: #e0973b;
+  --state-error: #db5a5a;
+  --state-offline: #7a8493;
 
   /* Severity */
-  --severity-info: #3b82f6;
-  --severity-warning: #f97316;
-  --severity-critical: #ef4444;
+  --severity-info: #5aa6e0;
+  --severity-warning: #e0973b;
+  --severity-critical: #db5a5a;
 
   /* Source */
-  --source-simulated: #a78bfa;
-  --source-real: #38bdf8;
+  --source-simulated: #b48ee6;
+  --source-real: #39c5e0;
 
-  /* Accent (selection/focus) */
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
+  /* Tinted shadows */
+  --shadow-color: 215 30% 4%;
+  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.4);
+  --shadow-md: 0 2px 8px hsl(var(--shadow-color) / 0.45),
+    0 1px 2px hsl(var(--shadow-color) / 0.35);
+  --shadow-lg: 0 8px 24px hsl(var(--shadow-color) / 0.55),
+    0 2px 4px hsl(var(--shadow-color) / 0.4);
+  --shadow-focus: 0 0 0 3px hsl(28 75% 55% / 0.35);
+  --shadow-critical: 0 4px 16px hsl(0 60% 55% / 0.25);
 
-  /* Row heights (D-10 SCADA density) */
-  --row-table: 28px;
-  --row-list: 32px;
-  --row-header: 36px;
+  /* Density (SCADA) */
+  --row-table: 32px;
+  --row-list: 36px;
+  --row-header: 40px;
 
-  /* Spacing (3-step scale) */
+  /* Spacing scale */
   --space-1: 8px;
   --space-2: 12px;
   --space-3: 16px;
   --space-4: 24px;
   --space-5: 32px;
+  --space-6: 48px;
 
-  /* Radii */
+  /* Radius */
+  --radius-xs: 3px;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
+  --radius-xl: 12px;
 
   /* Type */
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", monospace;
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI",
+    "Helvetica Neue", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono",
+    Menlo, monospace;
+
+  /* Type scale */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --text-3xl: 40px;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
 
   /* Layout */
-  --topbar-height: 48px;
-  --rail-width: 60px;
-  --rail-width-expanded: 200px;
+  --topbar-height: 56px;
+  --sidebar-width: 220px;
+  --content-max: 1440px;
 
   /* Z */
+  --z-sticky: 50;
   --z-toast: 1000;
   --z-modal: 900;
+
+  /* Motion */
+  --t-instant: 80ms;
+  --t-fast: 120ms;
+  --t-base: 180ms;
+  --t-slow: 280ms;
+  --t-slower: 420ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Layout (extended) */
+  --sidebar-width: 220px;
+  --content-max: 1440px;
+  --content-pad-x: 24px;
+  --content-pad-y: 24px;
+
+  /* Subtle background tints for elevation hierarchy */
+  --tint-accent: rgba(224, 151, 59, 0.06);
+  --tint-online: rgba(57, 197, 143, 0.06);
+  --tint-warning: rgba(224, 151, 59, 0.08);
+  --tint-critical: rgba(219, 90, 90, 0.08);
+
+  /* Status pills (run / stop / online / offline) */
+  --pill-bg: var(--bg-overlay);
+  --pill-fg: var(--text-secondary);
+
+  /* Role text colors for badges */
+  --role-admin: #b48ee6;
+  --role-viewer: #5aa6e0;
+
+  /* Focus ring (more visible) */
+  --ring-color: rgba(224, 151, 59, 0.45);
 }
 
 [data-theme="light"] {
-  --bg-base: #f7f8fa;
+  --bg-base: #f2f4f7;
   --bg-elevated: #ffffff;
   --bg-overlay: #ffffff;
-  --bg-hover: #eef0f3;
+  --bg-hover: #ebeef3;
   --border: #d8dde3;
   --border-strong: #b8c0cb;
 
   --text-primary: #11151a;
-  --text-secondary: #5a6573;
-  --text-muted: #8a95a3;
+  --text-secondary: #4a5663;
+  --text-muted: #7a8593;
   --text-inverse: #ffffff;
 
-  --state-online: #15803d;
-  --state-degraded: #ca8a04;
-  --state-error: #b91c1c;
-  --state-offline: #4b5563;
+  --accent: #c87f1d;
+  --accent-hover: #b06f15;
+  --accent-soft: rgba(200, 127, 29, 0.1);
+  --accent-strong: rgba(200, 127, 29, 0.25);
+
+  --state-online: #2a9d72;
+  --state-degraded: #c87f1d;
+  --state-error: #c04444;
+  --state-offline: #6b7682;
 
   --severity-info: #2563eb;
-  --severity-warning: #ea580c;
-  --severity-critical: #dc2626;
+  --severity-warning: #c87f1d;
+  --severity-critical: #c04444;
 
   --source-simulated: #7c3aed;
   --source-real: #0284c7;
 
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
+  --shadow-color: 30 25% 30%;
+  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.06);
+  --shadow-md: 0 2px 8px hsl(var(--shadow-color) / 0.1),
+    0 1px 2px hsl(var(--shadow-color) / 0.06);
+  --shadow-lg: 0 8px 24px hsl(var(--shadow-color) / 0.12);
+  --shadow-focus: 0 0 0 3px hsl(28 75% 45% / 0.2);
+  --shadow-critical: 0 4px 16px hsl(0 60% 50% / 0.18);
+
+  --tint-accent: rgba(200, 127, 29, 0.05);
+  --tint-online: rgba(42, 157, 114, 0.05);
+  --tint-warning: rgba(200, 127, 29, 0.06);
+  --tint-critical: rgba(192, 68, 68, 0.07);
+
+  --role-admin: #7c3aed;
+  --role-viewer: #2563eb;
+
+  --ring-color: rgba(200, 127, 29, 0.4);
 }
 
 * {
@@ -109,19 +201,27 @@ body,
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+  font-size: 14px;
+}
+
 body {
   font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
   background: var(--bg-base);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "cv01";
+  text-rendering: optimizeLegibility;
 }
 
 a {
   color: var(--accent);
   text-decoration: none;
+  transition: color var(--t-fast) var(--ease);
 }
 
 a:hover {
@@ -137,7 +237,7 @@ code,
 .numeric {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
 }
 
 button {
@@ -159,17 +259,25 @@ textarea {
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 4px 8px;
+  padding: 6px 10px;
   outline: none;
+  transition: border-color var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease);
 }
 
-input:focus,
-select:focus,
-textarea:focus {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
 }
 
-/* Scrollbar */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -182,8 +290,29 @@ textarea:focus {
 ::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border-radius: 5px;
+  border: 2px solid var(--bg-base);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

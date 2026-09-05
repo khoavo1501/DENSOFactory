@@ -41,6 +41,9 @@ pnpm-debug.log*
 build/
 dist/
 coverage/
+*.tsbuildinfo
+vite.config.d.ts
+vite.config.js
 
 # ====== Environment & secrets ======
 .env

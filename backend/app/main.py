@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 # `os` is used in lifespan to gate MQTT consumer in test mode.
 _ = os  # silence unused-import warnings if any.
 
-from app.api import admin, auth, devices, events, exports
+from app.api import admin, auth, devices, events, exports, m10
 from app.api.middleware_csrf import csrf_protect
 from app.core.config import get_settings
 from app.db.session import SessionLocal
@@ -114,6 +114,7 @@ def create_app() -> FastAPI:
     app.include_router(devices.router)
     app.include_router(events.router)
     app.include_router(exports.router)
+    app.include_router(m10.router)
     app.include_router(ws_router)
 
     @app.get("/healthz")

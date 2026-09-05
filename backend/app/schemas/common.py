@@ -102,3 +102,70 @@ class Page(BaseModel):
 
 class ExportTooLarge(Exception):
     pass
+
+
+# ====== Gateway / PLC / Warning (M10) ======
+class PLCSnapshot(BaseModel):
+    """Latest telemetry snapshot for a single PLC.
+
+    Values are derived from `plc_snapshots` (one row per MQTT message).
+    """
+
+    temperature: Optional[float] = None
+    rpm: Optional[float] = None
+    current_amp: Optional[float] = None
+    heartbeat: Optional[int] = None
+    operating_status: Optional[str] = None
+    status: Optional[str] = None
+    mode: Optional[str] = "normal"
+    ts: Optional[int] = None
+
+
+class GatewayOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    gateway_id: str
+    name: str
+    status: str
+    fw_version: Optional[str] = None
+    ip: Optional[str] = None
+    last_seen_ts: Optional[int] = None
+    location: Optional[str] = None
+
+
+class GatewayWithPLCs(GatewayOut):
+    plcs: list["PLCOut"] = []
+
+
+class PLCOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    plc_id: str
+    gateway_id: str
+    name: Optional[str] = None
+    operating_status: str
+    status: str
+    last_seen_ts: Optional[int] = None
+    location: Optional[str] = None
+    latest_snapshot: Optional[PLCSnapshot] = None
+
+
+class WarningOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    target_type: str
+    target_id: str
+    code: str
+    severity: str
+    message: Optional[str] = None
+    cleared: int
+    ts: int
+
+
+class PairRequest(BaseModel):
+    gateway_id: str
+
+
+# Resolve forward reference for GatewayWithPLCs.plcs: list[PLCOut]
+GatewayWithPLCs.model_rebuild()
